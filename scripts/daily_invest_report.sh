@@ -105,23 +105,51 @@ if not by_portfolio:
 
 echo ""
 
-# Indices + Insights (mantido)
+# Indices (com variacao diaria) + Insights
 python3 -c "
 import re
+
 with open('$REPORT_MD') as f:
     txt = f.read()
+
+# Parse indices table for day variation
+print('📈 Índices:')
+idx_section = False
 for line in txt.split('\n'):
-    if 'Ibovespa' in line or 'IFIX' in line or 'Bitcoin USD' in line:
-        print(line.strip())
-in_ins = False
-for line in txt.split('\n'):
-    if 'Insights & Recomendações' in line:
-        in_ins = True
+    if '| Ibovespa |' in line and 'Dia' in line:
+        idx_section = True
         continue
-    if in_ins and line.startswith('---'):
-        break
-    if in_ins and line.strip():
-        print(line.strip())
+    if idx_section and line.startswith('|---'):
+        continue
+    if idx_section and line.startswith('|') and not line.startswith('| Índice'):
+        parts = [p.strip() for p in line.split('|')]
+        if len(parts) >= 4:
+            name = parts[1].replace('Índice','').strip()
+            day = parts[3].replace('🔴','').replace('🟢','').replace('🟡','').strip()
+            if name and day and '%' in day:
+                emoji = '🔴' if '-' in day else '🟢'
+                print(f'  {emoji} {name}: {day}')
+    if idx_section and (line.startswith('##') or 'Temáticos' in line):
+        idx_section = False
+
+# Macro
+print()
+print('🏦 Macro:')
+for line in txt.split('\n'):
+    line = line.strip()
+    if '**Selic**' in line or '**Juro Real**' in line:
+        val = line.split(':',1)[-1].strip().replace('**','')
+        print(f'  • Selic: {val}' if 'Selic' in line else f'  • Juro Real: {val}')
+    if '**Fed Funds**' in line:
+        val = line.split(':',1)[-1].strip().replace('**','')
+        print(f'  • Fed Funds: {val}')
+
+# Sentimento
+print()
+for line in txt.split('\n'):
+    if 'Sentimento' in line:
+        val = line.split('**',1)[-1].replace('**','').strip().lstrip(':').strip()
+        print(f'🧭 {val}')
 " 2>/dev/null
 
 echo ""
