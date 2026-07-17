@@ -216,36 +216,80 @@ def fetch_fed_funds() -> dict:
 
 
 def fetch_treasury() -> list[dict]:
-    """Busca taxas do Tesouro Direto. Fallback para ultimos valores conhecidos."""
-    import re
-    bonds = []
+    """Busca taxas do Tesouro Direto via dados abertos do Tesouro Transparente (CKAN)."""
+    target_bonds = {
+        "Prefixado 2032": ("Tesouro Prefixado", "01/01/2032"),
+        "Prefixado 2037": ("Tesouro Prefixado com Juros Semestrais", "01/01/2037"),
+        "IPCA+ 2040": ("Tesouro IPCA+", "15/08/2040"),
+        "IPCA+ 2050": ("Tesouro IPCA+", "15/08/2050"),
+        "Selic 2031": ("Tesouro Selic", "01/03/2031"),
+    }
+    found = {}
+
     try:
-        req = urllib.request.Request(
-            "https://investidor10.com.br/tesouro-direto/investir/",
-            headers={"User-Agent": "Mozilla/5.0"}
-        )
-        resp = urllib.request.urlopen(req, timeout=15)
-        html = resp.read().decode("utf-8", errors="ignore")
-        pattern = r'\[(Tesouro [^\]]+)\].*?\|\s*([\d,]+%)\s*\|\s*([\d,]+%)\s*\|\s*R\$\s*[\d.,]+\s*\|\s*(\d{2}/\d{2}/\d{4})'
-        matches = re.findall(pattern, html)
+        url = "https://www.tesourotransparente.gov.br/ckan/dataset/df56aa42-484a-4a59-8184-7676580c81e3/resource/796d2059-14e9-44e3-80c9-2d9e30b405c1/download/precotaxatesourodireto.csv"
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        resp = urllib.request.urlopen(req, timeout=60)
+        reader = resp.read().decode("latin-1", errors="ignore").splitlines()
 
-        relevant = []
-        for name, rate, est_rate, maturity in matches:
-            name = name.replace("  ", " ").strip()
-            if any(k in name for k in ["Prefixado 2032", "Prefixado 2037", "IPCA+ 2040", "IPCA+ 2050", "Selic 2031"]):
-                relevant.append({"name": name, "rate": rate, "est_rate": est_rate, "maturity": maturity})
-        if relevant:
-            return relevant[:7]
+        for line in reader:
+            if not line or line.startswith("Tipo Titulo"):
+                continue
+            parts = line.split(";")
+            if len(parts) < 6:
+                continue
+            tipo, venc, data_base, taxa_compra, taxa_venda = parts[0], parts[1], parts[2], parts[3], parts[4]
+
+            for name, (target_tipo, target_venc) in target_bonds.items():
+                if tipo == target_tipo and venc == target_venc:
+                    if name not in found or data_base > found[name]["data_base"]:
+                        found[name] = {
+                            "data_base": data_base,
+                            "taxa_compra": taxa_compra,
+                            "taxa_venda": taxa_venda,
+                        }
+
+            if len(found) == len(target_bonds):
+                break
+
+        # Formata resultado
+        result = []
+        labels = {
+            "Prefixado 2032": "Tesouro Prefixado 2032",
+            "Prefixado 2037": "Tesouro Prefixado 2037 (Juros Sem.)",
+            "IPCA+ 2040": "Tesouro IPCA+ 2040",
+            "IPCA+ 2050": "Tesouro IPCA+ 2050",
+            "Selic 2031": "Tesouro Selic 2031",
+        }
+        for name in target_bonds:
+            if name in found:
+                f = found[name]
+                rate = f"{f['taxa_venda']}%" if name.startswith("Prefixado") else (
+                    f"SELIC + {f['taxa_venda']}%" if name.startswith("Selic") else
+                    f"IPCA + {f['taxa_venda']}%"
+                )
+                result.append({
+                    "name": labels[name],
+                    "rate": rate,
+                    "est_rate": f"{f['taxa_venda']}%",
+                    "maturity": target_bonds[name][1],
+                })
+
+        return result if result else _treasury_fallback()
+
     except Exception as e:
-        print(f"  ⚠️ Tesouro (live): {e}")
+        print(f"  ⚠️ Tesouro (CKAN): {e}")
+        return _treasury_fallback()
 
-    # Fallback: ultimos valores conhecidos (atualizar via agente quando necessario)
+
+def _treasury_fallback() -> list[dict]:
+    """Fallback estatico quando CKAN falha."""
     return [
-        {"name": "Tesouro Prefixado 2032", "rate": "14,57%", "est_rate": "14,69%", "maturity": "01/01/2032"},
-        {"name": "Tesouro Prefixado 2037 (Juros Sem.)", "rate": "14,61%", "est_rate": "14,73%", "maturity": "01/01/2037"},
-        {"name": "Tesouro IPCA+ 2040", "rate": "IPCA + 7,56%", "est_rate": "12,23%", "maturity": "15/08/2040"},
-        {"name": "Tesouro IPCA+ 2050", "rate": "IPCA + 7,26%", "est_rate": "11,93%", "maturity": "15/08/2050"},
-        {"name": "Tesouro Selic 2031", "rate": "SELIC + 0,07%", "est_rate": "14,33%", "maturity": "01/03/2031"},
+        {"name": "Tesouro Prefixado 2032", "rate": "14,53%", "est_rate": "14,53%", "maturity": "01/01/2032"},
+        {"name": "Tesouro Prefixado 2037 (Juros Sem.)", "rate": "14,61%", "est_rate": "14,61%", "maturity": "01/01/2037"},
+        {"name": "Tesouro IPCA+ 2040", "rate": "IPCA + 7,69%", "est_rate": "7,69%", "maturity": "15/08/2040"},
+        {"name": "Tesouro IPCA+ 2050", "rate": "IPCA + 7,41%", "est_rate": "7,41%", "maturity": "15/08/2050"},
+        {"name": "Tesouro Selic 2031", "rate": "SELIC + 0,08%", "est_rate": "0,08%", "maturity": "01/03/2031"},
     ]
 
 
