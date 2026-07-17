@@ -197,16 +197,14 @@ Crie uma planilha no Google Sheets com 2 abas: `Minha Carteira` e `Outra Carteir
 
 | Fonte | Uso | Custo |
 |-------|-----|-------|
-| yfinance | Preços, histórico, fundamentos | Grátis |
+| yfinance | Preços, histórico, fundamentos, índices, Fed Funds (^IRX) | Grátis |
 | CoinGecko | Bitcoin BRL/USD | Grátis |
 | Banco Central | Selic, IPCA | Grátis |
-| Alpha Vantage | Fed Funds | Grátis (demo key) |
 | InfoMoney RSS | Manchetes do mercado | Grátis |
 | Suno RSS | Notícias de FIIs | Grátis |
 
 ## Limitações
 
-- Limite de 25 req/dia no Alpha Vantage free tier (Fed Funds usa demo key)
 - yfinance pode ter atraso de ~15min em cotações
-- Dados fundamentalistas de ações BR no yfinance são limitados — Alpha Vantage complementa
-- `GOOGLESHEETS_BATCH_UPDATE` escreve a partir de A1 — o script padroniza colunas para evitar corrupção
+- Dados fundamentalistas de ações BR no yfinance são limitados (P/L, ROE podem vir vazios)
+- `GOOGLESHEETS_BATCH_UPDATE` escreve a partir de A1 — usar aba separada (AtivosPrecos)

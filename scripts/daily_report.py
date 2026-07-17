@@ -203,15 +203,15 @@ def fetch_selic() -> dict:
 
 
 def fetch_fed_funds() -> dict:
-    """Busca Fed Funds Rate via Alpha Vantage (gratuito)."""
+    """Busca Fed Funds Rate via yfinance (^IRX: 13-week T-bill, proxy do Fed Funds)."""
     try:
-        url = "https://www.alphavantage.co/query?function=FEDERAL_FUNDS_RATE&interval=monthly&apikey=demo"
-        resp = json.loads(urllib.request.urlopen(url, timeout=10).read())
-        rate = float(resp["data"][0]["value"]) if resp.get("data") else None
-        return {"fed_funds": rate}
+        t = yf.Ticker("^IRX")
+        rate = t.fast_info.get("lastPrice") or t.fast_info.get("regularMarketPreviousClose")
+        if rate:
+            return {"fed_funds": rate}
     except Exception as e:
         print(f"  ⚠️ Fed: {e}")
-        return {}
+    return {}
 
 
 def fetch_indices() -> dict:

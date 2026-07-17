@@ -136,7 +136,7 @@ composio execute GOOGLESHEETS_GET_SPREADSHEET_INFO -d '{
 | yfinance | Ações BR (.SA), FIIs, ETFs US, Ibovespa, IFIX | Grátis |
 | CoinGecko | Bitcoin (BTC/BRL, BTC/USD) | Grátis |
 | Banco Central | Selic meta, IPCA 12m | Grátis |
-| Alpha Vantage | Fed Funds Rate | Grátis (demo key) |
+| Fed Funds (^IRX) | Proxy da taxa de juros americana | Grátis |
 | InfoMoney RSS | Manchetes do mercado BR | Grátis |
 | Suno RSS | Notícias de FIIs | Grátis |
 
