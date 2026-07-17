@@ -1,9 +1,9 @@
 ---
-name: investimentos-extra
-description: Analise extra de ativos — estende a fundamentalista com previsoes de analistas, investimentos em andamento, riscos, forcas, perspectivas e veredito. Use quando o usuario pedir "analise WEGE3", "me fala sobre KNRI11", ou qualquer analise de ativo individual.
+name: investimentos-ticker
+description: Analise completa de um ticker — estende a fundamentalista com previsoes de analistas, investimentos em andamento, riscos, forcas, perspectivas e veredito. Use quando o usuario pedir "analise WEGE3", "me fala sobre KNRI11", ou qualquer analise de ativo individual.
 ---
 
-# Análise Extra de Ativos
+# Análise de Ticker
 
 Estende `investimentos-fundamental-analyst` com camadas adicionais: projeções, investimentos, riscos, forças e veredito.
 
