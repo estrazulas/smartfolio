@@ -75,6 +75,27 @@ Regra no `sheets.json`:
 
 Mapeamento explícito no campo `ticker_map` do `sheets.json`.
 
+### `ticker_meta` — metadados por ticker
+
+Define moeda e geografia de cada ativo. Usado por `daily_report.py` para formatar preços (R$ vs US$), gráfico de moeda, alocação geográfica, e mini-tabela temática.
+
+```json
+{
+  "ticker_meta": {
+    "WEGE3":           {"currency": "BRL", "geo": "Brasil"},
+    "NASDAQ:MCHI":     {"currency": "USD", "geo": "China"},
+    "NYSEARCA:IAU":    {"currency": "USD", "geo": "Global"},
+    "BTCUSD":          {"currency": "USD", "geo": "Cripto"}
+  }
+}
+```
+
+Campos:
+- `currency`: `"BRL"` ou `"USD"` — formatação de preço e gráfico de exposição por moeda
+- `geo`: `"Brasil"`, `"EUA"`, `"China"`, `"Emergentes"`, `"Cripto"`, `"Global"` — gráfico geográfico e mini-tabela temática
+
+> ⚠️ Todo ticker novo precisa de entrada no `ticker_meta`. Sem isso, `daily_report.py` assume BRL/Brasil como fallback.
+
 ---
 
 ## Estrutura da planilha (colunas)
@@ -143,16 +164,23 @@ composio execute GOOGLESHEETS_GET_SPREADSHEET_INFO -d '{
 
 ## Relatório diário (daily_report.py)
 
-Gera `reports/daily_YYYY-MM-DD.md` + `.pdf` com 7 seções:
+Gera `reports/daily_YYYY-MM-DD.md` + `.pdf` com 8 seções:
 
 1. 📈 Oscilações Significativas (>3%)
 2. 💰 Patrimônio (por carteira + total)
 3. 🏦 Cenário Macro: Selic, CDI, IPCA, Juro Real, Fed Funds
    - Tabela de índices: Ibovespa, IFIX, Bitcoin (preço + variação dia/semana/mês/ano)
-4. 📋 Tabela de ativos (preço + variação dia/semana/mês)
-5. 📰 Destaques do Mercado (RSS InfoMoney + Suno)
-6. 🌎 Notícias Macro (filtro por keywords: Selic, Copom, tarifa, etc.)
-7. 💡 Insights & Recomendações (sentimento, RF vs bolsa)
+4. 🇧🇷 Tesouro Nacional (taxas Prefixado, IPCA+, Selic)
+5. 🍕 Alocação — 5 gráficos de pizza (2 por linha, HTML table):
+   - Por carteira (Dani Carteira, Ana Carteira) — classes de ativo
+   - Exposição por Moeda (BRL × USD)
+   - Alocação Geográfica (labels dinâmicos com tickers: ex: "Global (IAU, SLV, DBA)")
+   - Cripto & Proteções (Bitcoin + Proteções com tickers)
+6. 📋 Tabela de ativos (preço + variação dia/semana/mês/ano)
+7. 🌍 Temáticos: China, Emergentes, Proteção (dinâmico via ticker_meta["geo"])
+8. 📰 Destaques do Mercado (RSS InfoMoney + Suno)
+9. 🌎 Notícias Macro (filtro por keywords: Selic, Copom, tarifa, etc.)
+10. 💡 Insights & Recomendações (sentimento, RF vs bolsa)
 
 ### Uso
 
@@ -194,6 +222,7 @@ Usa a skill `md-to-pdf` para converter `.md` → `.pdf` com hyperlinks preservad
 - BTC não funciona no yfinance em BRL — usar CoinGecko
 - `composio execute` depende de conexão ativa (`composio connections list`)
 - Sempre rodar `sync.py check` antes de `update` — nunca escrever às cegas
+- **Todo ticker novo precisa de entrada no `ticker_meta`** do `sheets.json` — moeda e geografia. Sem isso, o relatório assume fallback BRL/Brasil e os gráficos de moeda/geografia ficam errados.
 
 ---
 
