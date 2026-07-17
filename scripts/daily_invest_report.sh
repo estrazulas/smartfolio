@@ -32,7 +32,7 @@ echo "=== PDF ===" >> "$LOG"
 # Envia por email com .md + .pdf anexos
 echo "=== Email ===" >> "$LOG"
 ~/.hermes/hermes-agent/venv/bin/python ~/.hermes/scripts/gmail_send_attach.py \
-  "${REPORT_EMAIL:-daniel.allrightt@gmail.com}" \
+  "${REPORT_EMAIL:-}" \
   "Relatório Diário de Investimentos — $DATE" \
   "$REPORT_MD" \
   "$REPORT_PDF" >> "$LOG" 2>&1 || echo "⚠️ Email falhou" >> "$LOG"
@@ -47,7 +47,7 @@ import re
 with open('$REPORT_MD') as f:
     txt = f.read()
 for line in txt.split('\n'):
-    if '**Dani Carteira**' in line or '**Ana Carteira**' in line or 'Total geral' in line:
+    if '**Minha Carteira**' in line or '**Outra Carteira**' in line or 'Total geral' in line:
         print(line.strip())
 " 2>/dev/null
 

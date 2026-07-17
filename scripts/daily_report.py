@@ -525,7 +525,7 @@ def main():
     report.append("| Ticker | Preço | Dia | Semana | Mês |")
     report.append("|--------|-------|-----|--------|-----|")
 
-    for sheet_name in ["Dani Carteira", "Ana Carteira"]:
+    for sheet_name in sorted(snapshot["sheets"].keys()):
         assets = all_assets.get(sheet_name, {})
         if not assets:
             continue

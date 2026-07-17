@@ -149,7 +149,7 @@ No `sheets.json`, mapeie como cada ticker da planilha é buscado:
 
 ### Exemplo mínimo
 
-Crie uma planilha no Google Sheets com 2 abas: `Dani Carteira` e `Ana Carteira` (ou os nomes que preferir).
+Crie uma planilha no Google Sheets com 2 abas: `Minha Carteira` e `Outra Carteira` (ou os nomes que preferir).
 
 **Aba "Minha Carteira":**
 

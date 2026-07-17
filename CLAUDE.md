@@ -15,7 +15,7 @@ python3 -m venv .venv
 `.env`:
 ```
 INVEST_SPREADSHEET_ID=<seu_id>
-SHEET_WHITELIST="Dani Carteira,Ana Carteira"   # aspas obrigatorias (espacos)
+SHEET_WHITELIST="Minha Carteira,Outra Carteira"   # aspas obrigatorias (espacos)
 ```
 
 ## Estrutura
@@ -106,7 +106,7 @@ Devem estar ACTIVE. Para conectar: `composio link <toolkit> --no-browser --no-wa
 ```bash
 composio execute GOOGLESHEETS_BATCH_GET -d '{
   "spreadsheet_id": "'"$INVEST_SPREADSHEET_ID"'",
-  "ranges": ["Dani Carteira!1:3"]
+  "ranges": ["Minha Carteira!1:3"]
 }'
 ```
 
