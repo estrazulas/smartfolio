@@ -199,6 +199,28 @@ def fmt_pct(value: float | None) -> str:
     return f"{color}{value:+.1f}%"
 
 
+def pie_chart_url(labels: list[str], values: list[float], title: str = "") -> str:
+    """Gera URL de grafico de pizza via QuickChart.io."""
+    import urllib.parse
+    total = sum(values)
+    if total <= 0:
+        return ""
+    pcts = [f"{v/total*100:.0f}%" for v in values]
+    colors = ["#3366CC", "#DC3912", "#FF9900", "#109618", "#990099", "#0099C6", "#DD4477"]
+    chart = {
+        "type": "pie",
+        "data": {
+            "labels": [f"{l} ({p})" for l, p in zip(labels, pcts)],
+            "datasets": [{"data": values, "backgroundColor": colors[:len(values)]}],
+        },
+        "options": {
+            "title": {"display": bool(title), "text": title},
+            "plugins": {"datalabels": {"display": False}},
+        },
+    }
+    return f"https://quickchart.io/chart?c={urllib.parse.quote(json.dumps(chart))}"
+
+
 def fmt_brl(value: float) -> str:
     return f"R$ {value:,.0f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
@@ -515,9 +537,10 @@ def main():
                 all_assets[sheet_name][ticker] = prices
             all_tickers_set.add(ticker)
 
-    # 4. Buscar patrimonio
-    print("💰 Lendo patrimonio...")
+    # 4. Buscar patrimonio e alocacao por ativo
+    print("💰 Lendo patrimonio e alocacao...")
     portfolios = {}
+    allocations = {}  # {sheet_name: [(ticker, value, category), ...]}
     for sheet_name in snapshot["sheets"]:
         cfg = None
         ss = load_ticker_map()
@@ -555,6 +578,32 @@ def main():
                             break
 
         portfolios[sheet_name] = total
+
+        # Extrai alocacao por ativo (coluna G = alocado)
+        sheet_allocs = []
+        cat = None
+        for row in rows:
+            if not row:
+                continue
+            ticker = row[0].strip() if len(row) > 0 and row[0] else ""
+            # Detecta categoria (linhas como "Ações BR", "FIIs", "Equity")
+            if ticker in ("Ações BR", "FIIs", "Equity", "RF", "Proteções"):
+                cat = ticker
+                continue
+            if ticker in ("Ações", "Caixa", "Pre", "Inflacao"):
+                continue  # subcategorias, mantem a categoria pai
+            # Pega valor alocado da coluna G
+            if ticker and len(row) > 6:
+                g_val = row[6].strip() if row[6] else ""
+                if g_val:
+                    try:
+                        val = float(g_val.replace("R$", "").replace("$", "").replace(".", "").replace(",", ".").strip())
+                        if val > 0:
+                            current_cat = cat or "Outros"
+                            sheet_allocs.append((ticker, val, current_cat))
+                    except ValueError:
+                        pass
+        allocations[sheet_name] = sheet_allocs
 
     # 5. Buscar noticias
     print("📰 Buscando noticias...")
@@ -669,6 +718,71 @@ def main():
                 f"| {labels[name]} | {price_fmt} | {pct_str('day')} | {pct_str('week')} | {pct_str('month')} | {pct_str('year')} | {ath_str} |"
             )
     report.append("")
+
+    # --- Graficos de Pizza (Alocacao) ---
+    if allocations:
+        report.append("## 🍕 Alocação\n")
+
+        # 1. Por classe de ativo (uma pizza por carteira)
+        for sheet_name in sorted(allocations.keys()):
+            sheet_allocs = allocations[sheet_name]
+            if not sheet_allocs:
+                continue
+            by_cat = {}
+            for ticker, val, cat in sheet_allocs:
+                by_cat[cat] = by_cat.get(cat, 0) + val
+            if by_cat:
+                url = pie_chart_url(list(by_cat.keys()), list(by_cat.values()), sheet_name)
+                if url:
+                    report.append(f"![{sheet_name}]({url})")
+
+        # 2. Por moeda (BRL × USD)
+        usd_total = 0
+        brl_total = 0
+        for sheet_name, sheet_allocs in allocations.items():
+            for ticker, val, cat in sheet_allocs:
+                is_us = any(p in ticker for p in ("NASDAQ:", "NYSEARCA:", "BTCUSD"))
+                if is_us:
+                    usd_total += val
+                else:
+                    brl_total += val
+        if usd_total > 0 or brl_total > 0:
+            url = pie_chart_url(["BRL", "USD"], [brl_total, usd_total], "Exposição por Moeda")
+            if url:
+                report.append(f"![Moeda]({url})")
+
+        # 3. Geografico (Brasil, EUA, China, Emergentes)
+        geo_br = geo_us = geo_cn = geo_em = geo_other = 0
+        for sheet_name, sheet_allocs in allocations.items():
+            for ticker, val, cat in sheet_allocs:
+                t = ticker
+                if any(br in t for br in ("AUVP11", "WEGE3", "HGBS11", "RPRI11", "XPLG11",
+                                           "KNRI11", "HGLG11", "XPML11", "PCIP11", "BTLG11",
+                                           "CURRENCY:BTCBRL")) or cat in ("RF", "FIIs", "Ações BR"):
+                    geo_br += val
+                elif "MCHI" in t:
+                    geo_cn += val
+                elif any(u in t for u in ("SPHQ", "VNQ")):
+                    geo_us += val
+                elif "XCEM" in t:
+                    geo_em += val
+                else:
+                    geo_other += val
+        geo_labels = []
+        geo_values = []
+        for label, val in [("Brasil", geo_br), ("EUA", geo_us), ("China", geo_cn), ("Emergentes", geo_em)]:
+            if val > 0:
+                geo_labels.append(label)
+                geo_values.append(val)
+        if geo_other > 0:
+            geo_labels.append("Global")
+            geo_values.append(geo_other)
+        if geo_labels:
+            url = pie_chart_url(geo_labels, geo_values, "Alocação Geográfica")
+            if url:
+                report.append(f"![Geografia]({url})")
+
+        report.append("")
 
     # --- Tabela completa ---
     report.append("## 📋 Todos os Ativos\n")
