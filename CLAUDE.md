@@ -1,6 +1,6 @@
-# Investimentos Util
+# Smartfolio
 
-Utilitários para a planilha de investimentos via Composio + yfinance.
+Monitor de investimentos automatizado com Hermes Agent — via Composio + yfinance.
 
 Skills baseadas em [anthropics/financial-services](https://github.com/anthropics/financial-services) e [alirezarezvani/claude-skills](https://github.com/alirezarezvani/claude-skills).
 
@@ -15,7 +15,7 @@ python3 -m venv .venv
 `.env`:
 ```
 INVEST_SPREADSHEET_ID=<seu_id>
-SHEET_WHITELIST=Dani Carteira,Ana Carteira   # apenas essas abas serao acessadas
+SHEET_WHITELIST="Dani Carteira,Ana Carteira"   # aspas obrigatorias (espacos)
 ```
 
 ## Estrutura
@@ -25,14 +25,14 @@ SHEET_WHITELIST=Dani Carteira,Ana Carteira   # apenas essas abas serao acessadas
 sheets.json       → estrutura das abas, ticker mapping (gitignored)
 snapshot.json     → cache do ultimo scan de tickers (gitignored)
 plano.md          → plano completo do projeto (gitignored)
-sync.py           → script principal: snapshot, check, update
-daily_report.py   → relatorio diario: precos, macro, noticias, insights
+scripts/
+  sync.py           → snapshot, check, update (preços)
+  daily_report.py   → relatorio diario: precos, macro, noticias, insights
+  daily_invest_report.sh → wrapper cron: .md + .pdf + email
 skills/           → skills do Hermes (versionadas)
   fundamental-analyst/   → analise de P/L, ROE, Dividend Yield
   portfolio-rebalancer/  → peso alvo vs atual, sugestoes compra/venda
   earnings-reviewer/     → noticias, resultados, dividendos
-scripts/
-  daily_invest_report.sh → wrapper cron: .md + .pdf + email
 reports/          → relatorios gerados (gitignored)
 ```
 
