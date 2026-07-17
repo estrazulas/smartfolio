@@ -17,6 +17,7 @@ Relatório diário com preços, indicadores macro, notícias e insights de balan
 - **Sua carteira é 100% passiva (ETFs de índice global + renda fixa).** As análises de rebalanceamento, dividendos e valuation são mais úteis para quem tem ações e FIIs individuais.
 - **Você investe menos de R$ 50 mil.** O ganho de automação pode não compensar o tempo de setup (conectar Composio, modelar planilha, etc.).
 - **Você não usa Hermes Agent.** O projeto depende do ecossistema Hermes (skills, cron jobs, Composio). Sem ele, os scripts rodam standalone mas você perde a orquestração inteligente.
+- **Você quer recomendação de compra ou venda.** Este projeto é para **acompanhar sua carteira com insights de mercado**, não para dizer "compre X" ou "venda Y". As análises mostram dados (P/L, peso alvo vs atual, notícias), mas a decisão é sempre sua.
 - **Você quer trade ou day trade.** O foco é investimento de longo prazo: relatório diário, fundamentos, dividendos, rebalanceamento periódico. Não há gráfico de vela, RSI, estocástico ou ordem de compra/venda automática.
 
 ## Funcionalidades
