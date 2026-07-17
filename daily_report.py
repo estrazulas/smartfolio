@@ -363,10 +363,14 @@ def main():
 
     # 1. Garantir precos atualizados
     print("📊 sync.py update...")
-    subprocess.run(
+    result = subprocess.run(
         [sys.executable, str(PROJECT_DIR / "sync.py"), "update"],
-        capture_output=not print_stdout,
+        capture_output=True, text=True,
     )
+    if result.returncode != 0:
+        print(f"⚠️ sync.py falhou (exit {result.returncode}): {result.stderr[:200]}")
+    else:
+        print("✅ sync.py OK")
 
     # 2. Carregar dados
     snapshot = load_snapshot()
