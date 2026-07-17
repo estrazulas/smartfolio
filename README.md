@@ -3,11 +3,27 @@
 Monitoramento automatizado de carteira de investimentos com Hermes Agent.
 Relatório diário com preços, indicadores macro, notícias e insights de balanceamento.
 
+## Por que usar este projeto
+
+- **Com um comando, você tem 6 análises.** Diga `/carteira` e receba: relatório do dia, detecção de oportunidades (ativos em queda), rebalanceamento com valores em R$, notícias de cada ativo, valuation fundamentalista (P/L, ROE, DY) e sincronização de preços na planilha.
+- **Zero trabalho manual.** A planilha do Google Sheets é atualizada automaticamente. O relatório chega todo dia às 9h no WhatsApp e por email — você nem precisa pedir.
+- **Custo zero.** yfinance + CoinGecko + Banco Central. Nenhuma API paga.
+- **Você decide o que rodar.** A skill orquestradora pergunta uma por uma. Só executa a análise que fizer sentido naquele dia.
+- **Skills modulares e reutilizáveis.** Cada análise é uma skill independente. Use separadamente ou todas de uma vez.
+
+## Quando NÃO usar
+
+- **Você não quer um agente de IA.** Se prefere abrir o Google Sheets manualmente, conferir cotações no StatusInvest e ler notícia por notícia no InfoMoney, este projeto adiciona complexidade desnecessária.
+- **Sua carteira é 100% passiva (ETFs de índice global + renda fixa).** As análises de rebalanceamento, dividendos e valuation são mais úteis para quem tem ações e FIIs individuais.
+- **Você investe menos de R$ 50 mil.** O ganho de automação pode não compensar o tempo de setup (conectar Composio, modelar planilha, etc.).
+- **Você não usa Hermes Agent.** O projeto depende do ecossistema Hermes (skills, cron jobs, Composio). Sem ele, os scripts rodam standalone mas você perde a orquestração inteligente.
+- **Você quer trade ou day trade.** O foco é investimento de longo prazo: relatório diário, fundamentos, dividendos, rebalanceamento periódico. Não há gráfico de vela, RSI, estocástico ou ordem de compra/venda automática.
+
 ## Funcionalidades
 
 - 📊 **Relatório diário** com 8 seções: oscilações, patrimônio, cenário macro (Selic, Fed, tabela de índices com ATH), tabela de ativos (variação dia/semana/mês/ano), mini-tabela temática (China, Emergentes, Ouro), destaques do mercado, notícias macro e insights
 - 🔄 **Sincronização de preços** via yfinance + CoinGecko direto na planilha do Google Sheets
-- 🧠 **Skills de análise**: fundamentalista (P/L, ROE, dividend yield), rebalanceamento de carteira, monitor de notícias
+- 🧠 **Skills de análise**: orquestrador `/carteira`, fundamentalista (P/L, ROE, dividend yield), análise por ticker (preço-alvo, investimentos, riscos), rebalanceamento de carteira, monitor de notícias e dividendos
 - 🤖 **Cron job automático**: 9h BRT com entrega via WhatsApp + email
 
 ## Créditos
