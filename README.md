@@ -190,10 +190,10 @@ As skills ficam em `skills/` e são linkadas automaticamente em `~/.hermes/skill
 ### Cron job diário
 
 O script `scripts/daily_invest_report.sh` gera o relatório `.md` + `.pdf` e envia por email (Gmail API).
-Configure um cron job no Hermes:
+Configure um cron job no Hermes (o schedule vem do `.env`):
 
 ```
-- **Schedule**: `0 12 * * *` (9h BRT) → `30 17 * * *` (17h30 BRT, pós-fechamento)
+schedule: vem de CRON_SCHEDULE no .env  # padrão: 30 17 * * * (17h30 BRT)
 script: daily_invest_report.sh
 no_agent: true
 deliver: whatsapp          # resumo curto
