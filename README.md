@@ -231,17 +231,20 @@ email: via gmail_send_attach.py no próprio script
 ## Estrutura do Projeto
 
 ```
-├── .env.example          → template de variáveis
-├── sheets.example.json   → template de mapeamento
+├── .env.example          → template de variáveis (gitignored: .env)
+├── sheets.example.json   → template de mapeamento (gitignored: sheets.json)
 ├── CLAUDE.md             → instruções para agentes
-├── sync.py               → snapshot | check | update (preços)
-├── daily_report.py       → relatório diário completo
+├── README.md             → este arquivo
+├── scripts/
+│   ├── sync.py             → snapshot | check | update (preços)
+│   ├── daily_report.py     → relatório diário completo
+│   └── daily_invest_report.sh → wrapper do cron job
 ├── skills/               → skills do Hermes
+│   ├── carteira/           → orquestrador /carteira
 │   ├── fundamental-analyst/
+│   ├── fundamental-analyst-ticker/
 │   ├── portfolio-rebalancer/
 │   └── earnings-reviewer/
-├── scripts/
-│   └── daily_invest_report.sh  → wrapper do cron job
 └── reports/              → saída dos relatórios (gitignored)
 ```
 
