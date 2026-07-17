@@ -1,4 +1,4 @@
-# Investimentos Util
+# Smartfolio
 
 Monitoramento automatizado de carteira de investimentos com Hermes Agent.
 Relatório diário com preços, indicadores macro, notícias e insights de balanceamento.
