@@ -234,8 +234,9 @@ def fetch_indices() -> dict:
                 continue
 
             entry = {"price": price}
-            hist = t.history(period="400d")  # cobre 1 ano
+            hist = t.history(period="400d")
             if hist.empty or len(hist) < 2:
+                result[name] = entry  # sem historico, so preco
                 continue
 
             current_close = float(hist["Close"].iloc[-1])
@@ -524,7 +525,7 @@ def main():
             def pct_str(key):
                 v = d.get(f"{key}_pct")
                 if v is None:
-                    return " - "
+                    return "N/D"
                 color = "🔴" if v < -1 else ("🟢" if v > 1 else "")
                 return f"{color}{v:+.1f}%"
 

@@ -146,7 +146,8 @@ Gera `reports/daily_YYYY-MM-DD.md` + `.pdf` com 7 seções:
 
 1. 📈 Oscilações Significativas (>3%)
 2. 💰 Patrimônio (por carteira + total)
-3. 🏦 Cenário Macro: Selic, CDI, IPCA, Juro Real, Fed Funds, Ibovespa, IFIX, Bitcoin USD
+3. 🏦 Cenário Macro: Selic, CDI, IPCA, Juro Real, Fed Funds
+   - Tabela de índices: Ibovespa, IFIX, Bitcoin (preço + variação dia/semana/mês/ano)
 4. 📋 Tabela de ativos (preço + variação dia/semana/mês)
 5. 📰 Destaques do Mercado (RSS InfoMoney + Suno)
 6. 🌎 Notícias Macro (filtro por keywords: Selic, Copom, tarifa, etc.)
