@@ -147,9 +147,10 @@ Edite `.env` com seus dados:
 
 ```bash
 INVEST_SPREADSHEET_ID=<id-da-sua-planilha>
-SHEET_WHITELIST=Minha Carteira,Outra Carteira
-CRON_SCHEDULE=30 17 * * *  # horário do relatório diário (padrão: 17h30 BRT)
-ALPHA_VANTAGE_KEY=  # opcional, melhora dados de ações BR
+SHEET_WHITELIST="Minha Carteira,Outra Carteira"  # aspas obrigatórias (espaços)
+CRON_SCHEDULE=30 17 * * *     # horário do relatório diário (padrão: 17h30 BRT)
+PRICE_SHEET=AtivosPrecos       # aba onde os preços são escritos
+REPORT_EMAIL=seu.email@gmail.com  # destino dos relatórios .md + .pdf
 ```
 
 ### 3. Ambiente Python
