@@ -364,7 +364,7 @@ def main():
     # 1. Garantir precos atualizados
     print("📊 sync.py update...")
     result = subprocess.run(
-        [sys.executable, str(PROJECT_DIR / "sync.py"), "update"],
+        [sys.executable, str(PROJECT_DIR / "scripts" / "sync.py"), "update"],
         capture_output=True, text=True,
     )
     if result.stdout:

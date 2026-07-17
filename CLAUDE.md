@@ -154,8 +154,8 @@ Gera `reports/daily_YYYY-MM-DD.md` + `.pdf` com 7 seções:
 ### Uso
 
 ```bash
-.venv/bin/python daily_report.py          # gera e salva
-.venv/bin/python daily_report.py --print  # mostra no terminal tambem
+.venv/bin/python scripts/daily_report.py          # gera e salva
+.venv/bin/python scripts/daily_report.py --print  # mostra no terminal tambem
 ```
 
 ### Cron job

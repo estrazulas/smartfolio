@@ -14,7 +14,7 @@ cd "$PROJ_DIR"
 
 # Gera o relatório markdown
 echo "=== daily_report.py ===" >> "$LOG"
-.venv/bin/python daily_report.py >> "$LOG" 2>&1 || {
+.venv/bin/python scripts/daily_report.py >> "$LOG" 2>&1 || {
     echo "❌ Erro ao gerar relatório. Veja $LOG"
     cat "$LOG"
     exit 1

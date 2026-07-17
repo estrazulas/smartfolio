@@ -67,7 +67,7 @@ composio execute GOOGLESHEETS_GET_SPREADSHEET_INFO -d '{"spreadsheet_id": "<seu-
 ### 6. Primeiro snapshot
 
 ```bash
-.venv/bin/python sync.py snapshot
+.venv/bin/python scripts/sync.py snapshot
 ```
 
 ## Uso
@@ -76,13 +76,13 @@ composio execute GOOGLESHEETS_GET_SPREADSHEET_INFO -d '{"spreadsheet_id": "<seu-
 
 ```bash
 # Atualizar preços na planilha
-.venv/bin/python sync.py update
+.venv/bin/python scripts/sync.py update
 
 # Verificar se a planilha mudou desde o último snapshot
-.venv/bin/python sync.py check
+.venv/bin/python scripts/sync.py check
 
 # Gerar relatório diário completo
-.venv/bin/python daily_report.py --print
+.venv/bin/python scripts/daily_report.py --print
 ```
 
 ### Skills do Hermes
