@@ -66,7 +66,7 @@ def resolve_ticker(sheet_ticker: str, ticker_map: dict) -> tuple[str, str]:
 
 
 def fetch_price_history(symbol: str, source: str) -> dict:
-    """Retorna {current, day_ago, week_ago, month_ago}."""
+    """Retorna {current, day_ago, week_ago, month_ago, year_ago}."""
     if source == "coingecko":
         return fetch_coingecko_history(symbol)
 
@@ -89,13 +89,31 @@ def fetch_price_history(symbol: str, source: str) -> dict:
 
         import pandas as pd
 
-        return {
+        result = {
             "current": current,
             "day_ago": closest_price(1) if len(hist) > 1 else None,
             "week_ago": closest_price(7) if len(hist) > 5 else None,
             "month_ago": closest_price(30) if len(hist) > 21 else None,
             "year_ago": closest_price(365) if len(hist) > 252 else None,
         }
+
+        # Sanity check: variacao anual >500% sugere split mal ajustado
+        ya = result.get("year_ago")
+        if ya and ya > 0 and current > 0:
+            year_pct = abs((current / ya - 1) * 100)
+            if year_pct > 500:
+                from datetime import date, timedelta
+                target = (date.today() - timedelta(days=365)).strftime("%Y-%m-%d")
+                end = (date.today() - timedelta(days=358)).strftime("%Y-%m-%d")
+                raw = t.history(start=target, end=end, auto_adjust=False)
+                if not raw.empty and len(raw) > 0:
+                    raw_price = float(raw["Close"].iloc[0])
+                    if raw_price > 0:
+                        raw_pct = abs((current / raw_price - 1) * 100)
+                        if raw_pct < 500:
+                            result["year_ago"] = raw_price  # usa o valor nao-ajustado
+
+        return result
     except Exception as e:
         print(f"  ⚠️ {symbol}: {e}")
         return {}
