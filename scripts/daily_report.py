@@ -204,8 +204,9 @@ def fmt_pct(value: float | None) -> str:
     return f"{color}{value:+.1f}%"
 
 
-def pie_chart_url(labels: list[str], values: list[float], title: str = "") -> str:
-    """Gera URL de grafico de pizza via QuickChart.io."""
+def pie_chart_url(labels: list[str], values: list[float], title: str = "",
+                  width: int = 380, height: int = 260) -> str:
+    """Gera URL de grafico de pizza via QuickChart.io (tamanho reduzido)."""
     import urllib.parse
     total = sum(values)
     if total <= 0:
@@ -223,7 +224,30 @@ def pie_chart_url(labels: list[str], values: list[float], title: str = "") -> st
             "plugins": {"datalabels": {"display": False}},
         },
     }
-    return f"https://quickchart.io/chart?c={urllib.parse.quote(json.dumps(chart))}"
+    base = f"https://quickchart.io/chart?c={urllib.parse.quote(json.dumps(chart))}"
+    return f"{base}&w={width}&h={height}&devicePixelRatio=1"
+
+
+def chart_row(charts: list[tuple[str, str, str]]) -> str:
+    """Gera HTML table row com 2 charts lado a lado.
+    Cada elemento: (alt_text, url, fallback_alt).
+    Se sobrar 1, ocupa a linha inteira com colspan=2."""
+    if len(charts) == 1:
+        alt, url, fallback = charts[0]
+        return (f'<table><tr><td align="center">'
+                f'<img src="{url}" alt="{fallback}" width="380"/><br/>'
+                f'<b>{alt}</b>'
+                f'</td></tr></table>\n\n')
+    rows = ['<table><tr>']
+    for alt, url, fallback in charts:
+        rows.append(
+            f'<td align="center">'
+            f'<img src="{url}" alt="{fallback}" width="380"/><br/>'
+            f'<b>{alt}</b>'
+            f'</td>'
+        )
+    rows.append('</tr></table>\n\n')
+    return ''.join(rows)
 
 
 def fmt_brl(value: float) -> str:
@@ -726,6 +750,7 @@ def main():
     # --- Graficos de Pizza (Alocacao) ---
     if allocations:
         report.append("## 🍕 Alocação\n")
+        chart_pairs = []  # [(label, url, fallback_alt), ...]
 
         # 1. Por classe de ativo (uma pizza por carteira)
         for sheet_name in sorted(allocations.keys()):
@@ -737,9 +762,9 @@ def main():
                 by_cat[cat] = by_cat.get(cat, 0) + val
             if by_cat:
                 url = pie_chart_url(list(by_cat.keys()), list(by_cat.values()),
-                                   f"Renda Variável — {sheet_name}")
+                                    f"Renda Variável — {sheet_name}")
                 if url:
-                    report.append(f"![{sheet_name}]({url})")
+                    chart_pairs.append((sheet_name, url, sheet_name))
 
         # 2. Por moeda (BRL × USD)
         usd_total = 0
@@ -751,27 +776,28 @@ def main():
                 else:
                     brl_total += val
         if usd_total > 0 or brl_total > 0:
-            url = pie_chart_url(["BRL", "USD"], [brl_total, usd_total], "Renda Variável — Exposição por Moeda")
+            url = pie_chart_url(["BRL", "USD"], [brl_total, usd_total],
+                                "Renda Variável — Exposição por Moeda")
             if url:
-                report.append(f"![Moeda]({url})")
+                chart_pairs.append(("Moeda", url, "Moeda"))
 
         # 3. Geografico (usa ticker_meta["geo"])
-        geo_map = {}  # {geo: valor_total}
+        geo_map = {}
         for sheet_name, sheet_allocs in allocations.items():
             for ticker, val, cat in sheet_allocs:
                 geo = get_geo(ticker, ticker_meta)
                 geo_map[geo] = geo_map.get(geo, 0) + val
-        # Ordena: Brasil primeiro, depois o resto por valor
         geo_order = [g for g in ["Brasil", "EUA", "China", "Emergentes", "Cripto", "Global"] if g in geo_map]
         other_geos = sorted(set(geo_map.keys()) - set(geo_order), key=lambda g: -geo_map[g])
         geo_labels = geo_order + other_geos
         geo_values = [geo_map[g] for g in geo_labels]
         if geo_labels:
-            url = pie_chart_url(geo_labels, geo_values, "Renda Variável — Alocação Geográfica")
+            url = pie_chart_url(geo_labels, geo_values,
+                                "Renda Variável — Alocação Geográfica")
             if url:
-                report.append(f"![Geografia]({url})")
+                chart_pairs.append(("Geografia", url, "Geografia"))
 
-        # 4. Cripto e Proteções (Ouro, Prata, Commodities, Bitcoin)
+        # 4. Cripto e Proteções
         cripto_val = prot_val = 0
         for sheet_name, sheet_allocs in allocations.items():
             for ticker, val, cat in sheet_allocs:
@@ -787,9 +813,15 @@ def main():
             if prot_val > 0:
                 c_labels.append("Proteções (Ouro/Prata/Comm.)"); c_values.append(prot_val)
             if c_labels:
-                url = pie_chart_url(c_labels, c_values, "Renda Variável — Cripto & Proteções")
+                url = pie_chart_url(c_labels, c_values,
+                                    "Renda Variável — Cripto & Proteções")
                 if url:
-                    report.append(f"![CriptoProtecoes]({url})")
+                    chart_pairs.append(("Cripto & Proteções", url, "CriptoProtecoes"))
+
+        # Renderiza 2 por linha
+        for i in range(0, len(chart_pairs), 2):
+            row = chart_pairs[i:i+2]
+            report.append(chart_row(row))
 
         report.append("")
 
