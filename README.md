@@ -5,7 +5,7 @@ Relatório diário com preços, indicadores macro, notícias e insights de balan
 
 ## Funcionalidades
 
-- 📊 **Relatório diário** com 7 seções: oscilações, patrimônio, cenário macro (Selic, Fed, Ibovespa, IFIX, BTC), tabela de ativos, destaques do mercado, notícias macro e insights
+- 📊 **Relatório diário** com 8 seções: oscilações, patrimônio, cenário macro (Selic, Fed, tabela de índices com ATH), tabela de ativos (variação dia/semana/mês/ano), mini-tabela temática (China, Emergentes, Ouro), destaques do mercado, notícias macro e insights
 - 🔄 **Sincronização de preços** via yfinance + CoinGecko direto na planilha do Google Sheets
 - 🧠 **Skills de análise**: fundamentalista (P/L, ROE, dividend yield), rebalanceamento de carteira, monitor de notícias
 - 🤖 **Cron job automático**: 9h BRT com entrega via WhatsApp + email
@@ -198,6 +198,7 @@ Crie uma planilha no Google Sheets com 2 abas: `Minha Carteira` e `Outra Carteir
 | Fonte | Uso | Custo |
 |-------|-----|-------|
 | yfinance | Preços, histórico, fundamentos, índices, Fed Funds (^IRX) | Grátis |
+| yfinance (proxy) | IFIX via XFIX11.SA (ETF que replica o índice) | Grátis |
 | CoinGecko | Bitcoin BRL/USD | Grátis |
 | Banco Central | Selic, IPCA | Grátis |
 | InfoMoney RSS | Manchetes do mercado | Grátis |
