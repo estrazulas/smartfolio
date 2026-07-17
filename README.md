@@ -19,7 +19,7 @@ Relatório diário com preços, indicadores macro, notícias e insights de balan
 ## Por que usar este projeto
 
 - **Com um comando, você tem 6 análises.** Diga `/carteira` e receba: relatório do dia, detecção de oportunidades (ativos em queda), rebalanceamento com valores em R$, notícias de cada ativo, valuation fundamentalista (P/L, ROE, DY) e sincronização de preços na planilha.
-- **Zero trabalho manual.** A planilha do Google Sheets é atualizada automaticamente. O relatório chega todo dia às 9h no WhatsApp e por email — você nem precisa pedir.
+- **Zero trabalho manual.** A planilha do Google Sheets é atualizada automaticamente. O relatório chega todo dia no horário definido no `.env` (padrão 17h30 BRT) via WhatsApp e por email — você nem precisa pedir.
 - **Custo zero.** yfinance + CoinGecko + Banco Central. Nenhuma API paga.
 - **Você decide o que rodar.** A skill orquestradora pergunta uma por uma. Só executa a análise que fizer sentido naquele dia.
 - **Skills modulares e reutilizáveis.** Cada análise é uma skill independente. Use separadamente ou todas de uma vez.
@@ -148,6 +148,7 @@ Edite `.env` com seus dados:
 ```bash
 INVEST_SPREADSHEET_ID=<id-da-sua-planilha>
 SHEET_WHITELIST=Minha Carteira,Outra Carteira
+CRON_SCHEDULE=30 17 * * *  # horário do relatório diário (padrão: 17h30 BRT)
 ALPHA_VANTAGE_KEY=  # opcional, melhora dados de ações BR
 ```
 
