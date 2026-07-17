@@ -248,6 +248,12 @@ def fetch_indices() -> dict:
                 else:
                     entry[f"{label}_pct"] = None
 
+            # ATH (all-time high) via history
+            ath = float(hist["Close"].max())
+            if ath > 0:
+                entry["ath"] = ath
+                entry["ath_pct"] = (current_close / ath - 1) * 100
+
             result[name] = entry
         except Exception as e:
             print(f"  ⚠️ Indice {name}: {e}")
@@ -512,8 +518,8 @@ def main():
         report.append(f"  **Treasury 10Y**: referencia para renda fixa em USD")
     if indices:
         report.append("")
-        report.append("| Índice | Preço | Dia | Semana | Mês | Ano |")
-        report.append("|--------|-------|-----|--------|-----|-----|")
+        report.append("| Índice | Preço | Dia | Semana | Mês | Ano | ATH |")
+        report.append("|--------|-------|-----|--------|-----|-----|-----|")
         labels = {"IBOV": "Ibovespa", "IFIX": "IFIX", "BTC": "Bitcoin USD"}
         for name in ["IBOV", "IFIX", "BTC"]:
             if name not in indices:
@@ -530,8 +536,9 @@ def main():
                 color = "🔴" if v < -1 else ("🟢" if v > 1 else "")
                 return f"{color}{v:+.1f}%"
 
+            ath_str = pct_str("ath") if "ath_pct" in d else "N/D"
             report.append(
-                f"| {labels[name]} | {price_fmt} | {pct_str('day')} | {pct_str('week')} | {pct_str('month')} | {pct_str('year')} |"
+                f"| {labels[name]} | {price_fmt} | {pct_str('day')} | {pct_str('week')} | {pct_str('month')} | {pct_str('year')} | {ath_str} |"
             )
     report.append("")
 
