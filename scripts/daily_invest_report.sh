@@ -21,7 +21,7 @@ REPORT_PDF="${REPORT_MD%.md}.pdf"
 
 # Envia por email com .md + .pdf anexos
 ~/.hermes/hermes-agent/venv/bin/python ~/.hermes/scripts/gmail_send_attach.py \
-  "${REPORT_EMAIL:-daniel.allrightt@gmail.com}" \
+  "${REPORT_EMAIL:-}" \
   "Relatório Diário de Investimentos — $DATE" \
   "$REPORT_MD" \
   "$REPORT_PDF" > /dev/null 2>&1
