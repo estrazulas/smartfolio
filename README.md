@@ -176,9 +176,17 @@ composio execute GOOGLESHEETS_GET_SPREADSHEET_INFO -d '{"spreadsheet_id": "<seu-
 As skills ficam em `skills/` e são linkadas automaticamente em `~/.hermes/skills/`:
 
 ```
-"analise ABCD3"              → Fundamental Analyst
-"gere relatório de balanceamento" → Portfolio Rebalancer
-"tem notícia dos meus FIIs?" → Earnings Reviewer
+"/carteira" ou "como está minha carteira?"
+    → Orquestrador: relatório diário → oportunidades → rebalanceamento → notícias → fundamentalista
+
+"analise FIII11" ou "me fala sobre ABCD3"
+    → Análise completa do ticker: fundamentos, preço-alvo, investimentos, riscos, veredito
+
+"gere relatório de balanceamento"
+    → Portfolio Rebalancer
+
+"tem notícia dos meus FIIs?"
+    → Earnings Reviewer
 ```
 
 ### Cron job diário
