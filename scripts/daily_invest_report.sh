@@ -121,7 +121,7 @@ with open('$REPORT_MD') as f:
 print('📈 Índices:')
 idx_section = False
 for line in txt.split('\n'):
-    if '| Ibovespa |' in line and 'Dia' in line:
+    if '| Índice |' in line and 'Dia' in line:
         idx_section = True
         continue
     if idx_section and line.startswith('|---'):
@@ -134,7 +134,7 @@ for line in txt.split('\n'):
             if name and day and '%' in day:
                 emoji = '🔴' if '-' in day else '🟢'
                 print(f'  {emoji} {name}: {day}')
-    if idx_section and (line.startswith('##') or 'Temáticos' in line):
+    if idx_section and (line.startswith('##') or 'Temáticos' in line or 'Tesouro' in line):
         idx_section = False
 
 # Macro

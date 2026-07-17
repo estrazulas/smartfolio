@@ -318,10 +318,13 @@ def _treasury_fallback() -> list[dict]:
 
 
 def fetch_indices() -> dict:
-    """Busca Ibovespa, IFIX e BTC/USD com variacao dia/semana/mes/ano."""
+    """Busca Ibovespa, IFIX, BTC/USD, USD/BRL e EUR/BRL com variacao dia/semana/mes/ano."""
     import math
     result = {}
-    indices = {"IBOV": "^BVSP", "IFIX": "IFIX.SA", "BTC": "BTC-USD"}
+    indices = {
+        "IBOV": "^BVSP", "IFIX": "IFIX.SA", "BTC": "BTC-USD",
+        "USD": "USDBRL=X", "EUR": "EURBRL=X",
+    }
     # XFIX11.SA e um ETF que replica o IFIX — usado como proxy para historico
     ifix_proxy_ticker = "XFIX11.SA"
 
@@ -641,14 +644,18 @@ def main():
         report.append("")
         report.append("| Índice | Preço | Dia | Semana | Mês | Ano | ATH |")
         report.append("|--------|-------|-----|--------|-----|-----|-----|")
-        labels = {"IBOV": "Ibovespa", "IFIX": "IFIX", "BTC": "Bitcoin USD"}
-        for name in ["IBOV", "IFIX", "BTC"]:
+        labels = {"IBOV": "Ibovespa", "IFIX": "IFIX", "BTC": "Bitcoin USD", "USD": "Dólar", "EUR": "Euro"}
+        for name in ["IBOV", "IFIX", "BTC", "USD", "EUR"]:
             if name not in indices:
                 continue
             d = indices[name]
-            is_brl = name != "BTC"
-            price_fmt = f"R$ {d['price']:,.0f}" if is_brl else f"$ {d['price']:,.0f}"
-            price_fmt = price_fmt.replace(",", "X").replace(".", ",").replace("X", ".")
+            is_brl = name not in ("BTC",)
+            is_currency = name in ("USD", "EUR")
+            if is_currency:
+                price_fmt = f"R$ {d['price']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            else:
+                price_fmt = f"R$ {d['price']:,.0f}" if is_brl else f"$ {d['price']:,.0f}"
+                price_fmt = price_fmt.replace(",", "X").replace(".", ",").replace("X", ".")
 
             def pct_str(key):
                 v = d.get(f"{key}_pct")
