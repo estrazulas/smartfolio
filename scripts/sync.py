@@ -18,7 +18,7 @@ from pathlib import Path
 import yfinance as yf
 from dotenv import load_dotenv
 
-PROJECT_DIR = Path(__file__).resolve().parent
+PROJECT_DIR = Path(__file__).resolve().parent.parent  # scripts/ → raiz do repo
 ENV_FILE = PROJECT_DIR / ".env"
 SHEETS_FILE = PROJECT_DIR / "sheets.json"
 SNAPSHOT_FILE = PROJECT_DIR / "snapshot.json"
