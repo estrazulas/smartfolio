@@ -219,7 +219,8 @@ def fetch_indices() -> dict:
     import math
     result = {}
     indices = {"IBOV": "^BVSP", "IFIX": "IFIX.SA", "BTC": "BTC-USD"}
-    periods = {"day": "2d", "week": "7d", "month": "30d", "year": "365d"}
+    # XFIX11.SA e um ETF que replica o IFIX — usado como proxy para historico
+    ifix_proxy_ticker = "XFIX11.SA"
 
     for name, ticker in indices.items():
         try:
@@ -234,7 +235,9 @@ def fetch_indices() -> dict:
                 continue
 
             entry = {"price": price}
-            hist = t.history(period="400d")
+            # Para IFIX, usa XFIX11.SA como proxy (ETF que replica o indice)
+            hist_ticker = ifix_proxy_ticker if name == "IFIX" else ticker
+            hist = yf.Ticker(hist_ticker).history(period="400d")
             if hist.empty or len(hist) < 2:
                 result[name] = entry  # sem historico, so preco
                 continue
@@ -251,8 +254,12 @@ def fetch_indices() -> dict:
             # ATH (all-time high) via history
             ath = float(hist["Close"].max())
             if ath > 0:
+                if name == "IFIX":
+                    # Converte ATH do proxy (XFIX11) para escala do IFIX
+                    ifix_ratio = price / current_close if current_close > 0 else 1
+                    ath = ath * ifix_ratio
                 entry["ath"] = ath
-                entry["ath_pct"] = (current_close / ath - 1) * 100
+                entry["ath_pct"] = (price / ath - 1) * 100
 
             result[name] = entry
         except Exception as e:
