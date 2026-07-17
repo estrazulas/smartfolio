@@ -124,7 +124,7 @@ Sua planilha deve seguir esta estrutura de colunas (a partir da linha 5):
 - **Linhas 1-3**: totais da carteira (Total BR, Total US, Total Geral)
 - **Linha 4**: cabeçalho da seção ("Ações BR", "FIIs", "Equity", etc.)
 - **Linhas 5+**: ativos com ticker na coluna A
-- **Coluna C**: preenchida automaticamente pelo `sync.py update`
+- **Coluna C**: use `=PROCV(A5;AtivosPrecos!A:C;2;FALSO)` para puxar o preço automaticamente
 - **Tickers BR**: ações (ex: ABCD3, XYZB4), FIIs (ex: FIII11, FOOO11)
 - **Tickers US**: prefixo `NASDAQ:` ou `NYSEARCA:` (ex: `NASDAQ:MCHI`, `NYSEARCA:SPHQ`)
 - **BTC**: `CURRENCY:BTCBRL` (BRL) ou `BTCUSD` (USD)
@@ -147,7 +147,18 @@ No `sheets.json`, mapeie como cada ticker da planilha é buscado:
 }
 ```
 
-### Exemplo mínimo
+### AtivosPrecos (aba gerada automaticamente)
+
+O `sync.py update` escreve nesta aba:
+
+| Ticker | Preço | Moeda |
+|--------|-------|-------|
+| ABCD3 | 43.49 | BRL |
+| FIII11 | 102.70 | BRL |
+| NASDAQ:MCHI | 54.14 | USD |
+| BTCUSD | 63714 | USD |
+
+Use `=PROCV(A5;AtivosPrecos!A:C;2;FALSO)` na sua aba de carteira para puxar o preço.
 
 Crie uma planilha no Google Sheets com 2 abas: `Minha Carteira` e `Outra Carteira` (ou os nomes que preferir).
 

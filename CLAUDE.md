@@ -15,7 +15,8 @@ python3 -m venv .venv
 `.env`:
 ```
 INVEST_SPREADSHEET_ID=<seu_id>
-SHEET_WHITELIST="Minha Carteira,Outra Carteira"   # aspas obrigatorias (espacos)
+SHEET_WHITELIST="Minha Carteira,Outra Carteira,AtivosPrecos"   # aspas obrigatorias (espacos)
+PRICE_SHEET=AtivosPrecos                                      # aba onde precos sao escritos
 ```
 
 ## Estrutura
@@ -81,7 +82,7 @@ Mapeamento explícito no campo `ticker_map` do `sheets.json`.
 |-----|----------|
 | A | Ticker |
 | B | Peso alvo (%) |
-| C | Preço atual ← atualizado pelo sync.py |
+| C | Preço atual ← lido via `=PROCV()` da aba `AtivosPrecos` |
 | D | Quantidade |
 | E | Peso na carteira |
 | F | Valor alvo |

@@ -221,38 +221,22 @@ def fetch_price_coingecko(pair: str) -> float | None:
 
 
 def cmd_update():
-    """Atualiza precos na planilha."""
+    """Atualiza precos na aba separada (PRICE_SHEET)."""
     if not cmd_check():
         print("\n❌ Abortado. Atualize o snapshot primeiro.")
         sys.exit(1)
 
     config = load_sheets_config()
     ticker_map = config["ticker_map"]
-    ss = config["spreadsheets"][SPREADSHEET_ID]
     snapshot = load_snapshot()
     assert snapshot is not None, "snapshot required after cmd_check"
 
+    price_sheet = os.environ.get("PRICE_SHEET", "AtivosPrecos")
+
+    # Coleta todos os tickers e precos
+    rows = [["Ticker", "Preço", "Moeda"]]  # cabecalho
+    updated = 0
     for sheet_name, snap_data in snapshot["sheets"].items():
-        cfg = ss["sheets"].get(sheet_name)
-        if not cfg:
-            continue
-
-        # Le a planilha inteira
-        print(f"\n📖 Lendo {sheet_name}...")
-        max_col = col_letter(cfg["columnCount"])
-        max_cols = cfg["columnCount"]
-        # Le apenas ate a ultima linha de ticker + margem
-        last_row = max(p["row"] for p in snap_data["positions"].values()) + 5
-        range_str = f"{sheet_name}!A1:{max_col}{last_row}"
-        data = composio("GOOGLESHEETS_BATCH_GET", {
-            "spreadsheet_id": SPREADSHEET_ID,
-            "ranges": [range_str],
-        })
-        rows = data["data"]["valueRanges"][0].get("values", [])
-
-        # Busca precos e monta linha de atualizacao
-        price_col_idx = ord(cfg["price_col"]) - 65  # "C" -> 2
-        updated = 0
         for ticker in snap_data["tickers"]:
             source, symbol = resolve_ticker(ticker, ticker_map)
 
@@ -264,47 +248,28 @@ def cmd_update():
             if price is None:
                 continue
 
-            row_idx = snap_data["positions"][ticker]["row"] - 1  # 0-based
-
-            # Formata
+            # Determina moeda
             is_us = any(prefix in ticker for prefix in ["NASDAQ:", "NYSEARCA:"])
-            if ticker in ("CURRENCY:BTCBRL", "BTCUSD"):
-                price_str = f"R$ {price:,.0f}".replace(",", "X").replace(".", ",").replace("X", ".")
-            elif is_us:
-                price_str = f"${price:,.2f}"
-            else:
-                price_str = f"R$ {price:,.2f}".replace(".", ",")
+            is_btc = ticker in ("CURRENCY:BTCBRL", "BTCUSD")
+            currency = "USD" if (is_us or (is_btc and ticker == "BTCUSD")) else "BRL"
 
-            # Garante que a linha existe
-            while len(rows) <= row_idx:
-                rows.append([])
-            # Garante que tem colunas ate price_col_idx
-            while len(rows[row_idx]) <= price_col_idx:
-                rows[row_idx].append("")
-
-            old = rows[row_idx][price_col_idx] if len(rows[row_idx]) > price_col_idx else "?"
-            rows[row_idx][price_col_idx] = price_str
-            print(f"  {ticker}: {old} → {price_str}")
+            rows.append([ticker, price, currency])
+            print(f"  {ticker}: {price:.2f} {currency}")
             updated += 1
 
-        # CRITICO: padroniza TODAS as linhas com mesmo numero de colunas
-        # Evita desalinhamento no write-back
-        for i in range(len(rows)):
-            while len(rows[i]) < max_cols:
-                rows[i].append("")
+    if not updated:
+        print("⚠️  Nenhum preco obtido.")
+        return
 
-        # Escreve de volta
-        if updated:
-            print(f"  📤 Escrevendo {updated} precos em {sheet_name}...")
-            composio("GOOGLESHEETS_BATCH_UPDATE", {
-                "spreadsheet_id": SPREADSHEET_ID,
-                "sheet_name": sheet_name,
-                "values": rows,
-            })
-        else:
-            print(f"  ⚠️  Nenhum preco obtido para {sheet_name}")
+    # Escreve na aba separada (sem mexer nas abas originais)
+    print(f"\n📤 Escrevendo {updated} precos em '{price_sheet}'...")
+    composio("GOOGLESHEETS_BATCH_UPDATE", {
+        "spreadsheet_id": SPREADSHEET_ID,
+        "sheet_name": price_sheet,
+        "values": rows,
+    })
 
-    print("\n✅ Preços atualizados!")
+    print(f"✅ {updated} precos atualizados em '{price_sheet}'")
     print("📸 Atualizando snapshot...")
     cmd_snapshot()
 
