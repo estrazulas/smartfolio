@@ -367,6 +367,8 @@ def main():
         [sys.executable, str(PROJECT_DIR / "sync.py"), "update"],
         capture_output=True, text=True,
     )
+    if result.stdout:
+        print(result.stdout.strip())
     if result.returncode != 0:
         print(f"⚠️ sync.py falhou (exit {result.returncode}): {result.stderr[:200]}")
     else:
