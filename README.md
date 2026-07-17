@@ -155,7 +155,7 @@ ALPHA_VANTAGE_KEY=  # opcional, melhora dados de ações BR
 
 ```bash
 python3 -m venv .venv
-.venv/bin/pip install yfinance python-dotenv markdown
+.venv/bin/pip install yfinance python-dotenv markdown pandas
 ```
 
 ### 4. Conectar Google Sheets (Composio)

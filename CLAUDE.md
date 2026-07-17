@@ -9,7 +9,7 @@ Skills baseadas em [anthropics/financial-services](https://github.com/anthropics
 ```bash
 cp .env.example .env          # preencher IDs reais + SHEET_WHITELIST
 python3 -m venv .venv
-.venv/bin/pip install yfinance python-dotenv
+.venv/bin/pip install yfinance python-dotenv markdown pandas
 ```
 
 `.env`:
