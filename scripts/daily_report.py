@@ -749,6 +749,8 @@ def main():
 
     # --- Graficos de Pizza (Alocacao) ---
     if allocations:
+        # Wrapper para manter título + gráficos juntos no PDF
+        report.append('<div style="page-break-inside: avoid;">')
         report.append("## 🍕 Alocação\n")
         chart_pairs = []  # [(label, url, fallback_alt), ...]
 
@@ -782,15 +784,25 @@ def main():
                 chart_pairs.append(("Moeda", url, "Moeda"))
 
         # 3. Geografico (usa ticker_meta["geo"])
-        geo_map = {}
+        geo_map = {}     # {geo: valor_total}
+        geo_tickers = {} # {geo: [tickers_sem_prefixo]}
         for sheet_name, sheet_allocs in allocations.items():
             for ticker, val, cat in sheet_allocs:
                 geo = get_geo(ticker, ticker_meta)
                 geo_map[geo] = geo_map.get(geo, 0) + val
+                # Extrai nome curto do ticker (sem prefixo NASDAQ:/NYSEARCA:/CURRENCY:)
+                short = ticker.split(":")[-1] if ":" in ticker else ticker
+                geo_tickers.setdefault(geo, [])
+                if short not in geo_tickers[geo]:
+                    geo_tickers[geo].append(short)
         geo_order = [g for g in ["Brasil", "EUA", "China", "Emergentes", "Cripto", "Global"] if g in geo_map]
         other_geos = sorted(set(geo_map.keys()) - set(geo_order), key=lambda g: -geo_map[g])
-        geo_labels = geo_order + other_geos
-        geo_values = [geo_map[g] for g in geo_labels]
+        # Label dinâmico: "Global (IAU, SLV, DBA)" sem hardcode
+        geo_labels = []
+        for g in geo_order + other_geos:
+            tickers_str = ", ".join(geo_tickers[g])
+            geo_labels.append(f"{g} ({tickers_str})" if tickers_str else g)
+        geo_values = [geo_map[g] for g in (geo_order + other_geos)]
         if geo_labels:
             url = pie_chart_url(geo_labels, geo_values,
                                 "Renda Variável — Alocação Geográfica")
@@ -811,7 +823,10 @@ def main():
             if cripto_val > 0:
                 c_labels.append("Bitcoin"); c_values.append(cripto_val)
             if prot_val > 0:
-                c_labels.append("Proteções (Ouro/Prata/Comm.)"); c_values.append(prot_val)
+                # Nome dinâmico com tickers que são Global
+                prot_tickers = geo_tickers.get("Global", [])
+                prot_label = f"Proteções ({', '.join(prot_tickers)})" if prot_tickers else "Proteções"
+                c_labels.append(prot_label); c_values.append(prot_val)
             if c_labels:
                 url = pie_chart_url(c_labels, c_values,
                                     "Renda Variável — Cripto & Proteções")
@@ -823,9 +838,10 @@ def main():
             row = chart_pairs[i:i+2]
             report.append(chart_row(row))
 
-        report.append("")
+        report.append("</div>\n")
 
     # --- Tabela completa ---
+    report.append('<div style="page-break-before: always;"></div>')
     report.append("## 📋 Todos os Ativos\n")
     report.append("| Ticker | Preço | Dia | Semana | Mês | Ano |")
     report.append("|--------|-------|-----|--------|-----|-----|")
