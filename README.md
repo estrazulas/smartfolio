@@ -3,6 +3,19 @@
 Monitoramento automatizado de carteira de investimentos com Hermes Agent.
 Relatório diário com preços, indicadores macro, notícias e insights de balanceamento.
 
+## Dependências
+
+| Dependência | Por quê |
+|-------------|---------|
+| **Python 3.10+** | Scripts de sincronização e relatório |
+| **[Hermes Agent](https://hermes-agent.nousresearch.com/)** | Orquestração de skills, cron jobs, envio WhatsApp |
+| **[Composio](https://composio.dev/)** | Conexão com Google Sheets (ler/escrever preços) |
+| **Git** | Clonar o repo e versionar suas configurações |
+| **Google Chrome** | Geração de PDF com links (relatório diário) |
+| **Planilha Google Sheets** | Única coisa que **você** precisa criar |
+
+> ⚠️ **Não tente configurar sozinho.** Cole o link da sua planilha no chat e peça para o agente fazer tudo. Ele segue as instruções do `CLAUDE.md` — conecta Composio, preenche `.env`, cria `sheets.json`, tira snapshot e configura o cron job. Você só precisa de uma planilha acessível no Google Drive com seus ativos.
+
 ## Por que usar este projeto
 
 - **Com um comando, você tem 6 análises.** Diga `/carteira` e receba: relatório do dia, detecção de oportunidades (ativos em queda), rebalanceamento com valores em R$, notícias de cada ativo, valuation fundamentalista (P/L, ROE, DY) e sincronização de preços na planilha.
