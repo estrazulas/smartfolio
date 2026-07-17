@@ -17,6 +17,7 @@ python3 -m venv .venv
 INVEST_SPREADSHEET_ID=<seu_id>
 SHEET_WHITELIST="Minha Carteira,Outra Carteira,AtivosPrecos"   # aspas obrigatorias (espacos)
 PRICE_SHEET=AtivosPrecos                                      # aba onde precos sao escritos
+CRON_SCHEDULE=30 17 * * *                                     # horario do cron (padrao: 17h30 BRT)
 ```
 
 ## Estrutura
@@ -162,12 +163,23 @@ Gera `reports/daily_YYYY-MM-DD.md` + `.pdf` com 7 seções:
 
 ### Cron job
 
-Configurado como `no_agent: true` (zero tokens):
-- **Schedule**: `0 12 * * *` (9h BRT)
+**Schedule vem do `.env`** (`CRON_SCHEDULE`). Padrão: `30 17 * * *` (17h30 BRT, pós-fechamento do mercado).
+
+Ao criar ou atualizar o cron job, SEMPRE ler `CRON_SCHEDULE` do `.env`:
+
+```bash
+source .env
+# Usar $CRON_SCHEDULE como valor do parâmetro schedule
+```
+
+Configuração:
+- **no_agent**: true (zero tokens)
 - **Script**: `scripts/daily_invest_report.sh`
+- **Workdir**: `~/git/smartfolio/`
 - **Faz**: sync.py update → daily_report.py → md-to-pdf → Gmail API
 - **WhatsApp**: resumo curto (patrimônio, oscilações, índices, insights)
 - **Email**: relatório completo `.md` + `.pdf` com links clicáveis
+- **Deliver**: origin,whatsapp
 
 ### PDF
 
