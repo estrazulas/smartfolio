@@ -327,8 +327,9 @@ def generate_insights(all_assets: dict, portfolios: dict, macro: dict, macro_us:
             insights.append(f"📊 **Ibovespa {direction} {abs(ibov['day_pct']):.1f}%** — {'bolsa reagindo a noticias' if abs(ibov['day_pct']) > 2 else 'movimento moderado'}")
     if "IFIX" in indices:
         ifix = indices["IFIX"]
-        direction = "subiu" if ifix["day_pct"] > 0 else "caiu"
-        insights.append(f"🏢 **IFIX {direction} {abs(ifix['day_pct']):.1f}%** — {'FIIs em movimento' if abs(ifix['day_pct']) > 0.5 else 'FIIs estaveis'}")
+        if "day_pct" in ifix and ifix["day_pct"] is not None:
+            direction = "subiu" if ifix["day_pct"] > 0 else "caiu"
+            insights.append(f"🏢 **IFIX {direction} {abs(ifix['day_pct']):.1f}%** — {'FIIs em movimento' if abs(ifix['day_pct']) > 0.5 else 'FIIs estaveis'}")
 
     # --- BTC ---
     if "BTC" in indices:
@@ -349,7 +350,7 @@ def generate_insights(all_assets: dict, portfolios: dict, macro: dict, macro_us:
         sentiment_parts.append("bolsa em queda pode ser oportunidade de compra")
     elif "IBOV" in indices and indices["IBOV"]["day_pct"] > 1:
         sentiment_parts.append("bolsa em alta, cautela com novos aportes")
-    if "IFIX" in indices and indices["IFIX"]["day_pct"] < -0.5:
+    if "IFIX" in indices and "day_pct" in indices["IFIX"] and indices["IFIX"]["day_pct"] is not None and indices["IFIX"]["day_pct"] < -0.5:
         sentiment_parts.append("FIIs descontados, bons yields")
     if sentiment_parts:
         insights.append(f"🧭 **Sentimento**: {', '.join(sentiment_parts)}")
