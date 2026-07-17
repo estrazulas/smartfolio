@@ -38,40 +38,74 @@ echo "=== Email ===" >> "$LOG"
   "$REPORT_PDF" >> "$LOG" 2>&1 || echo "⚠️ Email falhou" >> "$LOG"
 
 # Extrai resumo para WhatsApp (stdout = entregue ao WhatsApp)
+# SEM patrimonio por seguranca — apenas top 5 altas e quedas por carteira
 echo "📊 Relatório $DATE"
 echo ""
 
-# Patrimonio
+# Top 5 altas e quedas por carteira (apenas percentuais, sem R$)
 python3 -c "
 import re
+
 with open('$REPORT_MD') as f:
     txt = f.read()
-for line in txt.split('\n'):
-    if '**Minha Carteira**' in line or '**Outra Carteira**' in line or 'Total geral' in line:
-        print(line.strip())
-" 2>/dev/null
 
-echo ""
+lines = txt.split('\n')
+current_portfolio = None
+assets = []
 
-# Oscilacoes
-python3 -c "
-import re
-with open('$REPORT_MD') as f:
-    txt = f.read()
-in_osc = False
-for line in txt.split('\n'):
-    if 'Oscilações Significativas' in line:
-        in_osc = True
+for line in lines:
+    # Detect portfolio
+    if line.startswith('| **') and 'Carteira' in line:
+        current_portfolio = line.replace('|','').replace('**','').strip()
         continue
-    if in_osc and line.startswith('##'):
+    # Stop at next section
+    if line.startswith('##') and current_portfolio:
         break
-    if in_osc and line.strip():
-        print(line.strip())
+    # Parse asset rows: | Ticker | Price | Day | Week | Month | Year |
+    if current_portfolio and line.startswith('|') and not line.startswith('|---') and not line.startswith('| Ticker'):
+        parts = [p.strip() for p in line.split('|')]
+        if len(parts) >= 4:
+            ticker = parts[1]
+            day_pct = parts[3].replace('🔴','').replace('🟢','').replace('🟡','').strip()
+            if ticker and day_pct and '%' in day_pct:
+                try:
+                    pct_val = float(day_pct.replace('%','').replace('+',''))
+                    assets.append((current_portfolio, ticker, pct_val, day_pct))
+                except:
+                    pass
+
+# Group by portfolio
+from collections import defaultdict
+by_portfolio = defaultdict(list)
+for pf, ticker, val, pct in assets:
+    by_portfolio[pf].append((ticker, val, pct))
+
+for pf_name in sorted(by_portfolio.keys()):
+    items = by_portfolio[pf_name]
+    losers = sorted([i for i in items if i[1] < 0], key=lambda x: x[1])[:5]
+    gainers = sorted([i for i in items if i[1] > 0], key=lambda x: x[1], reverse=True)[:5]
+
+    if losers or gainers:
+        print(f'🏷️ {pf_name}')
+        if losers:
+            print('  🔴 Quedas:')
+            for t, v, p in losers:
+                print(f'    {t}: {p}')
+        if gainers:
+            print('  🟢 Altas:')
+            for t, v, p in gainers:
+                print(f'    {t}: {p}')
+        print()
+
+# If no data at all
+if not by_portfolio:
+    print('Sem dados de variação disponíveis.')
+    print()
 " 2>/dev/null
 
 echo ""
 
-# Indices + Insights
+# Indices + Insights (mantido)
 python3 -c "
 import re
 with open('$REPORT_MD') as f:
