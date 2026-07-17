@@ -81,6 +81,32 @@ No `sheets.json`, mapeie como cada ticker da planilha é buscado:
 }
 ```
 
+Além do mapeamento de fonte, defina metadados por ticker para moeda e geografia:
+
+```json
+{
+  "ticker_meta": {
+    "ABCD3":           {"currency": "BRL", "geo": "Brasil"},
+    "FIII11":          {"currency": "BRL", "geo": "Brasil"},
+    "NASDAQ:MCHI":     {"currency": "USD", "geo": "China"},
+    "NYSEARCA:SPHQ":   {"currency": "USD", "geo": "EUA"},
+    "NYSEARCA:IAU":    {"currency": "USD", "geo": "Global"},
+    "BTCUSD":          {"currency": "USD", "geo": "Cripto"},
+    "CURRENCY:BTCBRL": {"currency": "BRL", "geo": "Cripto"}
+  }
+}
+```
+
+**Campos do `ticker_meta`:**
+
+| Campo | Valores | Uso |
+|-------|---------|-----|
+| `currency` | `"BRL"` ou `"USD"` | Formatação de preços (R$ vs US$) e gráfico de exposição por moeda |
+| `geo` | `"Brasil"`, `"EUA"`, `"China"`, `"Emergentes"`, `"Cripto"`, `"Global"` | Gráfico de alocação geográfica. `"Global"` = ouro/prata/commodities. `"Cripto"` = Bitcoin |
+
+> 💡 **Por que isso importa?** Sem `ticker_meta`, o código teria que adivinhar moeda por prefixo (`NASDAQ:` → USD) e mapear cada ticker individualmente para geografia. Com `ticker_meta`, qualquer pessoa define seus próprios ativos sem mexer no código.
+```
+
 ### AtivosPrecos (aba gerada automaticamente)
 
 O `sync.py update` escreve nesta aba:

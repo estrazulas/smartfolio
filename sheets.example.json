@@ -24,5 +24,13 @@
     "NASDAQ:MCHI": "MCHI",
     "NYSEARCA:SPHQ": "SPHQ",
     "CURRENCY:BTCBRL": "COINGECKO:BTC/BRL"
+  },
+  "ticker_meta": {
+    "ABCD3":            {"currency": "BRL", "geo": "Brasil"},
+    "XYZB4":            {"currency": "BRL", "geo": "Brasil"},
+    "FIII11":           {"currency": "BRL", "geo": "Brasil"},
+    "NASDAQ:MCHI":      {"currency": "USD", "geo": "China"},
+    "NYSEARCA:SPHQ":    {"currency": "USD", "geo": "EUA"},
+    "CURRENCY:BTCBRL":  {"currency": "BRL", "geo": "Cripto"}
   }
 }

@@ -47,6 +47,22 @@ def load_ticker_map() -> dict:
         return json.load(f)["ticker_map"]
 
 
+def load_ticker_meta() -> dict:
+    """Carrega metadados por ticker: currency, geo."""
+    with open(SHEETS_FILE) as f:
+        return json.load(f).get("ticker_meta", {})
+
+
+def get_currency(ticker: str, meta: dict) -> str:
+    """Retorna BRL ou USD com base no ticker_meta."""
+    return meta.get(ticker, {}).get("currency", "BRL")
+
+
+def get_geo(ticker: str, meta: dict) -> str:
+    """Retorna geografia com base no ticker_meta."""
+    return meta.get(ticker, {}).get("geo", "Outros")
+
+
 def composio(action: str, payload: dict) -> dict:
     composio_bin = os.path.expanduser("~/.composio/composio")
     cmd = [composio_bin, "execute", action, "-d", json.dumps(payload)]
@@ -146,17 +162,6 @@ def fetch_coingecko_history(pair: str) -> dict:
     except Exception as e:
         print(f"  ⚠️ CoinGecko {pair}: {e}")
         return {}
-
-
-def classify_ticker(ticker: str) -> str:
-    """Classifica ticker: acao_br | fii | etf | cripto."""
-    if ticker in ("CURRENCY:BTCBRL", "BTCUSD"):
-        return "cripto"
-    if any(ticker.startswith(p) for p in ("NASDAQ:", "NYSEARCA:")):
-        return "etf"
-    if ticker.endswith("11"):
-        return "fii"
-    return "acao_br"
 
 
 def fetch_asset_news(tickers: list[str]) -> list[dict]:
@@ -521,6 +526,7 @@ def main():
     # 2. Carregar dados
     snapshot = load_snapshot()
     ticker_map = load_ticker_map()
+    ticker_meta = load_ticker_meta()
     today = datetime.now(timezone.utc)
 
     # 3. Buscar historico de precos
@@ -644,10 +650,8 @@ def main():
             if abs(pct) > 3 and key not in seen_alerts:
                 seen_alerts.add(key)
                 emoji = "🟢" if pct > 0 else "🔴"
-                currency = "US$" if any(
-                    p in ticker for p in ("NASDAQ:", "NYSEARCA:")
-                ) else "R$"
-                price_fmt = f"{currency} {prices['current']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                currency_sign = "US$" if get_currency(ticker, ticker_meta) == "USD" else "R$"
+                price_fmt = f"{currency_sign} {prices['current']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                 alertas.append(f"  {emoji} **{ticker}**: {pct:+.1f}% ({price_fmt})")
 
     if alertas:
@@ -732,7 +736,8 @@ def main():
             for ticker, val, cat in sheet_allocs:
                 by_cat[cat] = by_cat.get(cat, 0) + val
             if by_cat:
-                url = pie_chart_url(list(by_cat.keys()), list(by_cat.values()), sheet_name)
+                url = pie_chart_url(list(by_cat.keys()), list(by_cat.values()),
+                                   f"Renda Variável — {sheet_name}")
                 if url:
                     report.append(f"![{sheet_name}]({url})")
 
@@ -741,46 +746,50 @@ def main():
         brl_total = 0
         for sheet_name, sheet_allocs in allocations.items():
             for ticker, val, cat in sheet_allocs:
-                is_us = any(p in ticker for p in ("NASDAQ:", "NYSEARCA:", "BTCUSD"))
-                if is_us:
+                if get_currency(ticker, ticker_meta) == "USD":
                     usd_total += val
                 else:
                     brl_total += val
         if usd_total > 0 or brl_total > 0:
-            url = pie_chart_url(["BRL", "USD"], [brl_total, usd_total], "Exposição por Moeda")
+            url = pie_chart_url(["BRL", "USD"], [brl_total, usd_total], "Renda Variável — Exposição por Moeda")
             if url:
                 report.append(f"![Moeda]({url})")
 
-        # 3. Geografico (Brasil, EUA, China, Emergentes)
-        geo_br = geo_us = geo_cn = geo_em = geo_other = 0
+        # 3. Geografico (usa ticker_meta["geo"])
+        geo_map = {}  # {geo: valor_total}
         for sheet_name, sheet_allocs in allocations.items():
             for ticker, val, cat in sheet_allocs:
-                t = ticker
-                if any(br in t for br in ("AUVP11", "WEGE3", "HGBS11", "RPRI11", "XPLG11",
-                                           "KNRI11", "HGLG11", "XPML11", "PCIP11", "BTLG11",
-                                           "CURRENCY:BTCBRL")) or cat in ("RF", "FIIs", "Ações BR"):
-                    geo_br += val
-                elif "MCHI" in t:
-                    geo_cn += val
-                elif any(u in t for u in ("SPHQ", "VNQ")):
-                    geo_us += val
-                elif "XCEM" in t:
-                    geo_em += val
-                else:
-                    geo_other += val
-        geo_labels = []
-        geo_values = []
-        for label, val in [("Brasil", geo_br), ("EUA", geo_us), ("China", geo_cn), ("Emergentes", geo_em)]:
-            if val > 0:
-                geo_labels.append(label)
-                geo_values.append(val)
-        if geo_other > 0:
-            geo_labels.append("Global")
-            geo_values.append(geo_other)
+                geo = get_geo(ticker, ticker_meta)
+                geo_map[geo] = geo_map.get(geo, 0) + val
+        # Ordena: Brasil primeiro, depois o resto por valor
+        geo_order = [g for g in ["Brasil", "EUA", "China", "Emergentes", "Cripto", "Global"] if g in geo_map]
+        other_geos = sorted(set(geo_map.keys()) - set(geo_order), key=lambda g: -geo_map[g])
+        geo_labels = geo_order + other_geos
+        geo_values = [geo_map[g] for g in geo_labels]
         if geo_labels:
-            url = pie_chart_url(geo_labels, geo_values, "Alocação Geográfica")
+            url = pie_chart_url(geo_labels, geo_values, "Renda Variável — Alocação Geográfica")
             if url:
                 report.append(f"![Geografia]({url})")
+
+        # 4. Cripto e Proteções (Ouro, Prata, Commodities, Bitcoin)
+        cripto_val = prot_val = 0
+        for sheet_name, sheet_allocs in allocations.items():
+            for ticker, val, cat in sheet_allocs:
+                geo = get_geo(ticker, ticker_meta)
+                if geo == "Cripto":
+                    cripto_val += val
+                elif geo == "Global":
+                    prot_val += val
+        if cripto_val > 0 or prot_val > 0:
+            c_labels, c_values = [], []
+            if cripto_val > 0:
+                c_labels.append("Bitcoin"); c_values.append(cripto_val)
+            if prot_val > 0:
+                c_labels.append("Proteções (Ouro/Prata/Comm.)"); c_values.append(prot_val)
+            if c_labels:
+                url = pie_chart_url(c_labels, c_values, "Renda Variável — Cripto & Proteções")
+                if url:
+                    report.append(f"![CriptoProtecoes]({url})")
 
         report.append("")
 
@@ -799,16 +808,16 @@ def main():
                 continue
 
             current = prices["current"]
-            is_us = any(p in ticker for p in ("NASDAQ:", "NYSEARCA:"))
+            currency = get_currency(ticker, ticker_meta)
 
-            if ticker == "CURRENCY:BTCBRL":
-                price_str = f"{fmt_brl(current)}"
-            elif ticker == "BTCUSD":
-                price_str = f"$ {current:,.0f}"
-            elif is_us:
+            if currency == "USD":
                 price_str = f"$ {current:,.2f}"
             else:
-                price_str = f"R$ {current:,.2f}".replace(".", ",")
+                # BRL: formata com R$
+                if ticker == "CURRENCY:BTCBRL":
+                    price_str = f"{fmt_brl(current)}"
+                else:
+                    price_str = f"R$ {current:,.2f}".replace(".", ",")
 
             day_pct = ((current / prices["day_ago"] - 1) * 100) if prices.get("day_ago") else None
             week_pct = ((current / prices["week_ago"] - 1) * 100) if prices.get("week_ago") else None
@@ -821,25 +830,32 @@ def main():
 
     report.append("")
 
-    # --- Mini-tabela: China, Emergentes, Ouro ---
+    # --- Mini-tabela temática (usa ticker_meta["geo"]) ---
     report.append("## 🌍 Temáticos: China, Emergentes, Proteção\n")
     report.append("| Índice | Preço | Dia | Semana | Mês | Ano | ATH |")
     report.append("|--------|-------|-----|--------|-----|-----|-----|")
-    thematic = {"MCHI": "China", "XCEM": "Emergentes", "IAU": "Ouro"}
-    for ticker, label in thematic.items():
-        prices = all_assets.get("Dani Carteira", {}).get(f"NASDAQ:{ticker}") or all_assets.get("Dani Carteira", {}).get(f"NYSEARCA:{ticker}")
-        if not prices:
-            prices = all_assets.get("Ana Carteira", {}).get(f"NASDAQ:{ticker}") or all_assets.get("Ana Carteira", {}).get(f"NYSEARCA:{ticker}")
-        if not prices or not prices.get("current"):
-            continue
-        cur = prices["current"]
-        day = ((cur / prices["day_ago"] - 1) * 100) if prices.get("day_ago") else None
-        week = ((cur / prices["week_ago"] - 1) * 100) if prices.get("week_ago") else None
-        month = ((cur / prices["month_ago"] - 1) * 100) if prices.get("month_ago") else None
-        year = ((cur / prices["year_ago"] - 1) * 100) if prices.get("year_ago") else None
-        report.append(
-            f"| {label} | $ {cur:,.2f} | {fmt_pct(day)} | {fmt_pct(week)} | {fmt_pct(month)} | {fmt_pct(year)} |   |"
-        )
+    # Agrupa tickers por geo relevante, usa ticker_meta
+    geo_labels = {"China": "China", "Emergentes": "Emergentes", "Global": "Proteção"}
+    seen = set()
+    for sheet_name in sorted(all_assets.keys()):
+        for ticker, prices in all_assets[sheet_name].items():
+            if ticker in seen or not prices.get("current"):
+                continue
+            geo = get_geo(ticker, ticker_meta)
+            label = geo_labels.get(geo)
+            if not label:
+                continue
+            seen.add(ticker)
+            cur = prices["current"]
+            currency_sign = "US$" if get_currency(ticker, ticker_meta) == "USD" else "R$"
+            day = ((cur / prices["day_ago"] - 1) * 100) if prices.get("day_ago") else None
+            week = ((cur / prices["week_ago"] - 1) * 100) if prices.get("week_ago") else None
+            month = ((cur / prices["month_ago"] - 1) * 100) if prices.get("month_ago") else None
+            year = ((cur / prices["year_ago"] - 1) * 100) if prices.get("year_ago") else None
+            price_str = f"{currency_sign} {cur:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            report.append(
+                f"| {label} ({ticker}) | {price_str} | {fmt_pct(day)} | {fmt_pct(week)} | {fmt_pct(month)} | {fmt_pct(year)} |   |"
+            )
     report.append("")
 
     # --- Noticias ---
