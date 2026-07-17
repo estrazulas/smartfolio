@@ -77,8 +77,8 @@ def fetch_price_history(symbol: str, source: str) -> dict:
         if not current:
             return {}
 
-        # Historico (ultimos 45 dias cobre 1 mes)
-        hist = t.history(period="45d")
+        # Historico (ultimos 400 dias cobre 1 ano)
+        hist = t.history(period="400d")
         if hist.empty:
             return {"current": current}
 
@@ -94,6 +94,7 @@ def fetch_price_history(symbol: str, source: str) -> dict:
             "day_ago": closest_price(1) if len(hist) > 1 else None,
             "week_ago": closest_price(7) if len(hist) > 5 else None,
             "month_ago": closest_price(30) if len(hist) > 21 else None,
+            "year_ago": closest_price(365) if len(hist) > 252 else None,
         }
     except Exception as e:
         print(f"  ⚠️ {symbol}: {e}")
@@ -551,23 +552,21 @@ def main():
 
     # --- Tabela completa ---
     report.append("## 📋 Todos os Ativos\n")
-    report.append("| Ticker | Preço | Dia | Semana | Mês |")
-    report.append("|--------|-------|-----|--------|-----|")
+    report.append("| Ticker | Preço | Dia | Semana | Mês | Ano |")
+    report.append("|--------|-------|-----|--------|-----|-----|")
 
     for sheet_name in sorted(snapshot["sheets"].keys()):
         assets = all_assets.get(sheet_name, {})
         if not assets:
             continue
-        report.append(f"| **{sheet_name}** | | | | |")
+        report.append(f"| **{sheet_name}** | | | | | |")
         for ticker, prices in assets.items():
             if not prices.get("current"):
                 continue
 
             current = prices["current"]
             is_us = any(p in ticker for p in ("NASDAQ:", "NYSEARCA:"))
-            currency = "US$" if is_us else "R$"
 
-            # BTC/BRL vs BTC/USD
             if ticker == "CURRENCY:BTCBRL":
                 price_str = f"{fmt_brl(current)}"
             elif ticker == "BTCUSD":
@@ -580,11 +579,33 @@ def main():
             day_pct = ((current / prices["day_ago"] - 1) * 100) if prices.get("day_ago") else None
             week_pct = ((current / prices["week_ago"] - 1) * 100) if prices.get("week_ago") else None
             month_pct = ((current / prices["month_ago"] - 1) * 100) if prices.get("month_ago") else None
+            year_pct = ((current / prices["year_ago"] - 1) * 100) if prices.get("year_ago") else None
 
             report.append(
-                f"| {ticker} | {price_str} | {fmt_pct(day_pct)} | {fmt_pct(week_pct)} | {fmt_pct(month_pct)} |"
+                f"| {ticker} | {price_str} | {fmt_pct(day_pct)} | {fmt_pct(week_pct)} | {fmt_pct(month_pct)} | {fmt_pct(year_pct)} |"
             )
 
+    report.append("")
+
+    # --- Mini-tabela: China, Emergentes, Ouro ---
+    report.append("## 🌍 Temáticos: China, Emergentes, Proteção\n")
+    report.append("| Índice | Preço | Dia | Semana | Mês | Ano | ATH |")
+    report.append("|--------|-------|-----|--------|-----|-----|-----|")
+    thematic = {"MCHI": "China", "XCEM": "Emergentes", "IAU": "Ouro"}
+    for ticker, label in thematic.items():
+        prices = all_assets.get("Dani Carteira", {}).get(f"NASDAQ:{ticker}") or all_assets.get("Dani Carteira", {}).get(f"NYSEARCA:{ticker}")
+        if not prices:
+            prices = all_assets.get("Ana Carteira", {}).get(f"NASDAQ:{ticker}") or all_assets.get("Ana Carteira", {}).get(f"NYSEARCA:{ticker}")
+        if not prices or not prices.get("current"):
+            continue
+        cur = prices["current"]
+        day = ((cur / prices["day_ago"] - 1) * 100) if prices.get("day_ago") else None
+        week = ((cur / prices["week_ago"] - 1) * 100) if prices.get("week_ago") else None
+        month = ((cur / prices["month_ago"] - 1) * 100) if prices.get("month_ago") else None
+        year = ((cur / prices["year_ago"] - 1) * 100) if prices.get("year_ago") else None
+        report.append(
+            f"| {label} | $ {cur:,.2f} | {fmt_pct(day)} | {fmt_pct(week)} | {fmt_pct(month)} | {fmt_pct(year)} |   |"
+        )
     report.append("")
 
     # --- Noticias ---
