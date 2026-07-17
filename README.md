@@ -51,9 +51,7 @@ Sua planilha deve seguir esta estrutura de colunas (a partir da linha 5):
 | MCHI       | 10%           |                 | 30      | 10       |                |             |               |
 
 ```
-┌──────────────────┬──────────────┬──────────────┐
-│  🟢 Minha Carteira │  Outra Carteira │  AtivosPrecos  │
-└──────────────────┴──────────────┴──────────────┘
+🟢 Minha Carteira  |  Outra Carteira  |  AtivosPrecos
 ```
 
 **Regras:**
