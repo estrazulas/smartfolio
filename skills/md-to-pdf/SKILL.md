@@ -25,17 +25,14 @@ python3 scripts/md-to-pdf.py [input.md] [output.pdf]
 ```
 
 **Defaults:**
-- input.md: `plano-nivelamento-ia-dev.md` (diretorio atual)
-- output.pdf: `plano-nivelamento-com-links.pdf`
+- input.md: primeiro `.md` no diretório atual
+- output.pdf: mesmo nome com `.pdf`
 
 ### Exemplos
 
 ```bash
-# Usando defaults
-python3 ~/.hermes/skills/md-to-pdf/scripts/md-to-pdf.py
-
 # Especificando arquivos
-python3 ~/.hermes/skills/md-to-pdf/scripts/md-to-pdf.py ~/Desktop/conteudoestudos/meu-arquivo.md meu-output.pdf
+python3 scripts/md-to-pdf.py entrada.md saida.pdf
 ```
 
 ## Como funciona
