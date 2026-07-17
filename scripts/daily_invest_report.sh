@@ -2,7 +2,11 @@
 # Wrapper do daily_report.py — gera relatório .md + .pdf e envia por email
 # WhatsApp: resumo curto (stdout final) | Email: relatorio completo + PDF
 set -e
-cd ~/git/smartfolio
+
+# Carrega .env
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+export $(grep -v '^#' "$SCRIPT_DIR/.env" | xargs) 2>/dev/null || true
+cd "$SCRIPT_DIR"
 
 # Gera o relatório markdown (silencioso)
 .venv/bin/python daily_report.py > /dev/null 2>&1
@@ -17,7 +21,7 @@ REPORT_PDF="${REPORT_MD%.md}.pdf"
 
 # Envia por email com .md + .pdf anexos
 ~/.hermes/hermes-agent/venv/bin/python ~/.hermes/scripts/gmail_send_attach.py \
-  "seu.email@gmail.com" \
+  "${REPORT_EMAIL:-daniel.allrightt@gmail.com}" \
   "Relatório Diário de Investimentos — $DATE" \
   "$REPORT_MD" \
   "$REPORT_PDF" > /dev/null 2>&1
@@ -31,7 +35,6 @@ python3 -c "
 import re
 with open('$REPORT_MD') as f:
     txt = f.read()
-# Extrai patrimonio
 for line in txt.split('\n'):
     if '**Dani Carteira**' in line or '**Ana Carteira**' in line or 'Total geral' in line:
         print(line.strip())
@@ -62,11 +65,9 @@ python3 -c "
 import re
 with open('$REPORT_MD') as f:
     txt = f.read()
-# Extrai indices
 for line in txt.split('\n'):
     if 'Ibovespa' in line or 'IFIX' in line or 'Bitcoin USD' in line:
         print(line.strip())
-# Extrai insights
 in_ins = False
 for line in txt.split('\n'):
     if 'Insights & Recomendações' in line:
