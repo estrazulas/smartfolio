@@ -215,10 +215,12 @@ def fetch_fed_funds() -> dict:
 
 
 def fetch_indices() -> dict:
-    """Busca Ibovespa, IFIX e BTC/USD via yfinance."""
+    """Busca Ibovespa, IFIX e BTC/USD com variacao dia/semana/mes/ano."""
     import math
     result = {}
     indices = {"IBOV": "^BVSP", "IFIX": "IFIX.SA", "BTC": "BTC-USD"}
+    periods = {"day": "2d", "week": "7d", "month": "30d", "year": "365d"}
+
     for name, ticker in indices.items():
         try:
             t = yf.Ticker(ticker)
@@ -228,25 +230,24 @@ def fetch_indices() -> dict:
             def valid(v):
                 return v is not None and not (isinstance(v, float) and math.isnan(v))
 
-            prev = None
-            for key in ("regularMarketPreviousClose", "previousClose"):
-                v = info.get(key)
-                if valid(v):
-                    prev = v
-                    break
-
-            if price and valid(price) and prev:
-                pct = (price / prev - 1) * 100
-            elif price and valid(price):
-                hist = t.history(period="2d")
-                if len(hist) >= 2:
-                    prev = float(hist["Close"].iloc[-2])
-                    pct = (price / prev - 1) * 100
-                else:
-                    pct = None
-            else:
+            if not price or not valid(price):
                 continue
-            result[name] = {"price": price, "change_pct": pct}
+
+            entry = {"price": price}
+            hist = t.history(period="400d")  # cobre 1 ano
+            if hist.empty or len(hist) < 2:
+                continue
+
+            current_close = float(hist["Close"].iloc[-1])
+            for label, days in [("day", 1), ("week", 7), ("month", 21), ("year", 252)]:
+                idx = max(0, len(hist) - 1 - days)
+                prev = float(hist["Close"].iloc[idx])
+                if prev > 0:
+                    entry[f"{label}_pct"] = (current_close / prev - 1) * 100
+                else:
+                    entry[f"{label}_pct"] = None
+
+            result[name] = entry
         except Exception as e:
             print(f"  ⚠️ Indice {name}: {e}")
     return result
@@ -320,20 +321,20 @@ def generate_insights(all_assets: dict, portfolios: dict, macro: dict, macro_us:
     # --- Mercado (Ibovespa / IFIX) ---
     if "IBOV" in indices:
         ibov = indices["IBOV"]
-        direction = "subiu" if ibov["change_pct"] > 0 else "caiu"
-        if abs(ibov["change_pct"]) > 1:
-            insights.append(f"📊 **Ibovespa {direction} {abs(ibov['change_pct']):.1f}%** — {'bolsa reagindo a noticias' if abs(ibov['change_pct']) > 2 else 'movimento moderado'}")
+        direction = "subiu" if ibov["day_pct"] > 0 else "caiu"
+        if abs(ibov["day_pct"]) > 1:
+            insights.append(f"📊 **Ibovespa {direction} {abs(ibov['day_pct']):.1f}%** — {'bolsa reagindo a noticias' if abs(ibov['day_pct']) > 2 else 'movimento moderado'}")
     if "IFIX" in indices:
         ifix = indices["IFIX"]
-        direction = "subiu" if ifix["change_pct"] > 0 else "caiu"
-        insights.append(f"🏢 **IFIX {direction} {abs(ifix['change_pct']):.1f}%** — {'FIIs em movimento' if abs(ifix['change_pct']) > 0.5 else 'FIIs estaveis'}")
+        direction = "subiu" if ifix["day_pct"] > 0 else "caiu"
+        insights.append(f"🏢 **IFIX {direction} {abs(ifix['day_pct']):.1f}%** — {'FIIs em movimento' if abs(ifix['day_pct']) > 0.5 else 'FIIs estaveis'}")
 
     # --- BTC ---
     if "BTC" in indices:
         btc = indices["BTC"]
-        direction = "subiu" if btc["change_pct"] > 0 else "caiu"
-        if abs(btc["change_pct"]) > 2:
-            insights.append(f"₿ **Bitcoin {direction} {abs(btc['change_pct']):.1f}%** — volatilidade elevada, atencao")
+        direction = "subiu" if btc["day_pct"] > 0 else "caiu"
+        if abs(btc["day_pct"]) > 2:
+            insights.append(f"₿ **Bitcoin {direction} {abs(btc['day_pct']):.1f}%** — volatilidade elevada, atencao")
 
     # --- Fed / US ---
     if macro_us.get("fed_funds"):
@@ -343,11 +344,11 @@ def generate_insights(all_assets: dict, portfolios: dict, macro: dict, macro_us:
     sentiment_parts = []
     if selic and ipca and selic > ipca + 5:
         sentiment_parts.append("juro real elevado favorece renda fixa BR")
-    if "IBOV" in indices and indices["IBOV"]["change_pct"] < -1:
+    if "IBOV" in indices and indices["IBOV"]["day_pct"] < -1:
         sentiment_parts.append("bolsa em queda pode ser oportunidade de compra")
-    elif "IBOV" in indices and indices["IBOV"]["change_pct"] > 1:
+    elif "IBOV" in indices and indices["IBOV"]["day_pct"] > 1:
         sentiment_parts.append("bolsa em alta, cautela com novos aportes")
-    if "IFIX" in indices and indices["IFIX"]["change_pct"] < -0.5:
+    if "IFIX" in indices and indices["IFIX"]["day_pct"] < -0.5:
         sentiment_parts.append("FIIs descontados, bons yields")
     if sentiment_parts:
         insights.append(f"🧭 **Sentimento**: {', '.join(sentiment_parts)}")
@@ -509,15 +510,27 @@ def main():
         report.append(f"  **Treasury 10Y**: referencia para renda fixa em USD")
     if indices:
         report.append("")
+        report.append("| Índice | Preço | Dia | Semana | Mês | Ano |")
+        report.append("|--------|-------|-----|--------|-----|-----|")
+        labels = {"IBOV": "Ibovespa", "IFIX": "IFIX", "BTC": "Bitcoin USD"}
         for name in ["IBOV", "IFIX", "BTC"]:
-            if name in indices:
-                d = indices[name]
-                emoji = "🟢" if (d["change_pct"] or 0) > 0 else "🔴"
-                label = {"IBOV": "Ibovespa", "IFIX": "IFIX", "BTC": "Bitcoin USD"}[name]
-                fmt = f"R$ {d['price']:,.0f}" if name in ("IBOV", "IFIX") else f"$ {d['price']:,.0f}"
-                fmt = fmt.replace(",", "X").replace(".", ",").replace("X", ".")
-                pct_str = f"({d['change_pct']:+.1f}%)" if d["change_pct"] is not None else ""
-                report.append(f"  {emoji} **{label}**: {fmt} {pct_str}")
+            if name not in indices:
+                continue
+            d = indices[name]
+            is_brl = name != "BTC"
+            price_fmt = f"R$ {d['price']:,.0f}" if is_brl else f"$ {d['price']:,.0f}"
+            price_fmt = price_fmt.replace(",", "X").replace(".", ",").replace("X", ".")
+
+            def pct_str(key):
+                v = d.get(f"{key}_pct")
+                if v is None:
+                    return " - "
+                color = "🔴" if v < -1 else ("🟢" if v > 1 else "")
+                return f"{color}{v:+.1f}%"
+
+            report.append(
+                f"| {labels[name]} | {price_fmt} | {pct_str('day')} | {pct_str('week')} | {pct_str('month')} | {pct_str('year')} |"
+            )
     report.append("")
 
     # --- Tabela completa ---
