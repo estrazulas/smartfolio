@@ -2,7 +2,7 @@
 # Wrapper do daily_report.py — gera relatório .md + .pdf e envia por email
 # WhatsApp: resumo curto (stdout final) | Email: relatorio completo + PDF
 set -e
-cd ~/git/investimentos_util
+cd ~/git/smartfolio
 
 # Gera o relatório markdown (silencioso)
 .venv/bin/python daily_report.py > /dev/null 2>&1
@@ -17,7 +17,7 @@ REPORT_PDF="${REPORT_MD%.md}.pdf"
 
 # Envia por email com .md + .pdf anexos
 ~/.hermes/hermes-agent/venv/bin/python ~/.hermes/scripts/gmail_send_attach.py \
-  "seu.email@gmail.com" \
+  "daniel.allrightt@gmail.com" \
   "Relatório Diário de Investimentos — $DATE" \
   "$REPORT_MD" \
   "$REPORT_PDF" > /dev/null 2>&1
@@ -82,7 +82,7 @@ echo ""
 echo "📎 Relatório completo e PDF no email"
 echo ""
 echo "💬 Consulte a qualquer momento:"
-echo "  • \"analise ABCD3\" — fundamentos de uma ação"
+echo "  • \"analise WEGE3\" — fundamentos de uma ação"
 echo "  • \"gere relatório de balanceamento\" — compre/venda"
 echo "  • \"tem notícia dos meus FIIs?\" — monitor de eventos"
 echo "  • \"como está minha carteira?\" — resumo rápido"
