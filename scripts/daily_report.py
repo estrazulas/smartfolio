@@ -797,10 +797,14 @@ def main():
                     geo_tickers[geo].append(short)
         geo_order = [g for g in ["Brasil", "EUA", "China", "Emergentes", "Cripto", "Global"] if g in geo_map]
         other_geos = sorted(set(geo_map.keys()) - set(geo_order), key=lambda g: -geo_map[g])
-        # Label dinâmico: "Global (IAU, SLV, DBA)" sem hardcode
+        # Label dinâmico: "Brasil (AUVP11, HGBS11, RPRI11, XPLG11 +6)" sem hardcode
         geo_labels = []
         for g in geo_order + other_geos:
-            tickers_str = ", ".join(geo_tickers[g])
+            tickers = geo_tickers[g]
+            if len(tickers) > 4:
+                tickers_str = ", ".join(tickers[:4]) + f" +{len(tickers) - 4}"
+            else:
+                tickers_str = ", ".join(tickers)
             geo_labels.append(f"{g} ({tickers_str})" if tickers_str else g)
         geo_values = [geo_map[g] for g in (geo_order + other_geos)]
         if geo_labels:
