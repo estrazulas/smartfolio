@@ -6,8 +6,10 @@ set -e
 PROJ_DIR=~/git/smartfolio
 LOG="/tmp/daily_report_$(date +%Y%m%d_%H%M%S).log"
 
-# Carrega .env
-export $(grep -v '^#' "$PROJ_DIR/.env" | xargs) 2>/dev/null || true
+# Carrega .env (com aspas para valores com espaço)
+set -a
+source "$PROJ_DIR/.env" 2>/dev/null || true
+set +a
 cd "$PROJ_DIR"
 
 # Gera o relatório markdown
