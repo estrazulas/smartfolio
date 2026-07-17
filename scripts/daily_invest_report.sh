@@ -66,6 +66,11 @@ for line in lines:
         parts = [p.strip() for p in line.split('|')]
         if len(parts) >= 4:
             ticker = parts[1]
+            # Remove prefixos de bolsa (BVMF:, NASDAQ:, NYSEARCA:, CURRENCY:)
+            for prefix in ['BVMF:', 'NASDAQ:', 'NYSEARCA:', 'CURRENCY:']:
+                if ticker.startswith(prefix):
+                    ticker = ticker[len(prefix):]
+                    break
             day_pct = parts[3].replace('🔴','').replace('🟢','').replace('🟡','').strip()
             if ticker and day_pct and '%' in day_pct:
                 try:
