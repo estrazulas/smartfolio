@@ -38,7 +38,7 @@ Relatório diário com preços, indicadores macro, notícias e insights de balan
 - 📊 **Relatório diário** com 8 seções: oscilações, patrimônio, cenário macro (Selic, Fed, tabela de índices com ATH), tabela de ativos (variação dia/semana/mês/ano), mini-tabela temática (China, Emergentes, Ouro), destaques do mercado, notícias macro e insights
 - 🔄 **Sincronização de preços** via yfinance + CoinGecko direto na planilha do Google Sheets
 - 🧠 **Skills de análise**: orquestrador `/carteira`, fundamentalista (P/L, ROE, dividend yield), análise por ticker (preço-alvo, investimentos, riscos), rebalanceamento de carteira, monitor de notícias e dividendos
-- 🤖 **Cron job automático**: 9h BRT com entrega via WhatsApp + email
+- 🤖 **Cron job automático**: 17h30 BRT com entrega via WhatsApp + email
 
 ## Modelo de Planilha
 
@@ -193,7 +193,7 @@ O script `scripts/daily_invest_report.sh` gera o relatório `.md` + `.pdf` e env
 Configure um cron job no Hermes:
 
 ```
-schedule: 0 12 * * *     # 9h BRT
+- **Schedule**: `0 12 * * *` (9h BRT) → `30 17 * * *` (17h30 BRT, pós-fechamento)
 script: daily_invest_report.sh
 no_agent: true
 deliver: whatsapp          # resumo curto
