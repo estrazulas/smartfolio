@@ -174,6 +174,9 @@ def fetch_asset_news(tickers: list[str]) -> list[dict]:
 def fmt_pct(value: float | None) -> str:
     if value is None:
         return "  -   "
+    # Sanity check: variacoes >500% sao erro de dados (split, evento)
+    if abs(value) > 500:
+        return "  ⚠️  "
     color = "🔴" if value < -3 else ("🟢" if value > 3 else "")
     return f"{color}{value:+.1f}%"
 
@@ -228,7 +231,10 @@ def fetch_treasury() -> list[dict]:
 
     try:
         url = "https://www.tesourotransparente.gov.br/ckan/dataset/df56aa42-484a-4a59-8184-7676580c81e3/resource/796d2059-14e9-44e3-80c9-2d9e30b405c1/download/precotaxatesourodireto.csv"
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        req = urllib.request.Request(url, headers={
+            "User-Agent": "Mozilla/5.0",
+            "Accept-Encoding": "gzip",
+        })
         resp = urllib.request.urlopen(req, timeout=60)
         reader = resp.read().decode("latin-1", errors="ignore").splitlines()
 
