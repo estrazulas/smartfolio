@@ -149,6 +149,27 @@ for line in txt.split('\n'):
         val = line.split(':',1)[-1].strip().replace('**','')
         print(f'  • Fed Funds: {val}')
 
+# Tesouro Nacional
+in_treasury = False
+treasury_lines = []
+for line in txt.split('\n'):
+    if 'Tesouro Nacional' in line:
+        in_treasury = True
+        continue
+    if in_treasury and line.startswith('##'):
+        break
+    if in_treasury and line.strip() and '**' in line:
+        parts = line.split('|')
+        if len(parts) >= 2:
+            name = parts[0].replace('**','').strip()
+            rate = parts[1].strip() if len(parts) > 1 else ''
+            treasury_lines.append(f'  • {name}: {rate}')
+if treasury_lines:
+    print()
+    print('🇧🇷 Tesouro Nacional:')
+    for tl in treasury_lines[:5]:
+        print(tl)
+
 # Sentimento
 print()
 for line in txt.split('\n'):

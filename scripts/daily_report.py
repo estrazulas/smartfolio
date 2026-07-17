@@ -215,6 +215,40 @@ def fetch_fed_funds() -> dict:
     return {}
 
 
+def fetch_treasury() -> list[dict]:
+    """Busca taxas do Tesouro Direto. Fallback para ultimos valores conhecidos."""
+    import re
+    bonds = []
+    try:
+        req = urllib.request.Request(
+            "https://investidor10.com.br/tesouro-direto/investir/",
+            headers={"User-Agent": "Mozilla/5.0"}
+        )
+        resp = urllib.request.urlopen(req, timeout=15)
+        html = resp.read().decode("utf-8", errors="ignore")
+        pattern = r'\[(Tesouro [^\]]+)\].*?\|\s*([\d,]+%)\s*\|\s*([\d,]+%)\s*\|\s*R\$\s*[\d.,]+\s*\|\s*(\d{2}/\d{2}/\d{4})'
+        matches = re.findall(pattern, html)
+
+        relevant = []
+        for name, rate, est_rate, maturity in matches:
+            name = name.replace("  ", " ").strip()
+            if any(k in name for k in ["Prefixado 2032", "Prefixado 2037", "IPCA+ 2040", "IPCA+ 2050", "Selic 2031"]):
+                relevant.append({"name": name, "rate": rate, "est_rate": est_rate, "maturity": maturity})
+        if relevant:
+            return relevant[:7]
+    except Exception as e:
+        print(f"  ⚠️ Tesouro (live): {e}")
+
+    # Fallback: ultimos valores conhecidos (atualizar via agente quando necessario)
+    return [
+        {"name": "Tesouro Prefixado 2032", "rate": "14,57%", "est_rate": "14,69%", "maturity": "01/01/2032"},
+        {"name": "Tesouro Prefixado 2037 (Juros Sem.)", "rate": "14,61%", "est_rate": "14,73%", "maturity": "01/01/2037"},
+        {"name": "Tesouro IPCA+ 2040", "rate": "IPCA + 7,56%", "est_rate": "12,23%", "maturity": "15/08/2040"},
+        {"name": "Tesouro IPCA+ 2050", "rate": "IPCA + 7,26%", "est_rate": "11,93%", "maturity": "15/08/2050"},
+        {"name": "Tesouro Selic 2031", "rate": "SELIC + 0,07%", "est_rate": "14,33%", "maturity": "01/03/2031"},
+    ]
+
+
 def fetch_indices() -> dict:
     """Busca Ibovespa, IFIX e BTC/USD com variacao dia/semana/mes/ano."""
     import math
@@ -524,6 +558,17 @@ def main():
     if fed_data.get("fed_funds"):
         report.append(f"\n  🇺🇸 **Fed Funds**: {fed_data['fed_funds']:.2f}% a.a.")
         report.append(f"  **Treasury 10Y**: referencia para renda fixa em USD")
+
+    # --- Tesouro Nacional ---
+    treasury = fetch_treasury()
+    if treasury:
+        report.append("")
+        report.append("## 🇧🇷 Tesouro Nacional\n")
+        for bond in treasury:
+            report.append(f"  **{bond['name']}**: {bond['rate']} | Rent. est.: {bond['est_rate']} | Venc: {bond['maturity']}")
+    else:
+        report.append(f"\n  🇧🇷 **Tesouro Nacional**: dados indisponiveis")
+
     if indices:
         report.append("")
         report.append("| Índice | Preço | Dia | Semana | Mês | Ano | ATH |")
