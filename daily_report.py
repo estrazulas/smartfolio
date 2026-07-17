@@ -48,7 +48,8 @@ def load_ticker_map() -> dict:
 
 
 def composio(action: str, payload: dict) -> dict:
-    cmd = ["composio", "execute", action, "-d", json.dumps(payload)]
+    composio_bin = os.path.expanduser("~/.composio/composio")
+    cmd = [composio_bin, "execute", action, "-d", json.dumps(payload)]
     result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
     data = json.loads(result.stdout)
     if not data.get("successful"):

@@ -47,7 +47,8 @@ def col_letter(n: int) -> str:
 
 def composio(action: str, payload: dict) -> dict:
     """Chama composio execute e retorna o JSON parseado."""
-    cmd = ["composio", "execute", action, "-d", json.dumps(payload)]
+    composio_bin = os.path.expanduser("~/.composio/composio")
+    cmd = [composio_bin, "execute", action, "-d", json.dumps(payload)]
     result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
     if result.returncode != 0:
         raise RuntimeError(f"composio failed: {result.stderr[:500]}")
