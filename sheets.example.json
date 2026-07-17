@@ -1,0 +1,28 @@
+{
+  "spreadsheets": {
+    "<seu_spreadsheet_id>": {
+      "title": "Nome da planilha",
+      "locale": "pt_BR",
+      "timeZone": "America/Sao_Paulo",
+      "sheets": {
+        "Nome da Aba": {
+          "index": 0,
+          "columnCount": 26,
+          "rowCount": 1000,
+          "ticker_col": "A",
+          "price_col": "C",
+          "ticker_start_row": 5
+        }
+      }
+    }
+  },
+  "ticker_map": {
+    "ABCD3": "ABCD3.SA",
+    "XYZB4": "XYZB4.SA",
+    "BVMF:ABCD3": "ABCD3.SA",
+    "FIII11": "FIII11.SA",
+    "NASDAQ:MCHI": "MCHI",
+    "NYSEARCA:SPHQ": "SPHQ",
+    "CURRENCY:BTCBRL": "COINGECKO:BTC/BRL"
+  }
+}

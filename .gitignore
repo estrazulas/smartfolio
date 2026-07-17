@@ -1,0 +1,7 @@
+.env
+sheets.json
+snapshot.json
+plano.md
+reports/
+__pycache__/
+.venv/
