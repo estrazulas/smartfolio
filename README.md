@@ -40,6 +40,62 @@ Relatório diário com preços, indicadores macro, notícias e insights de balan
 - 🧠 **Skills de análise**: orquestrador `/carteira`, fundamentalista (P/L, ROE, dividend yield), análise por ticker (preço-alvo, investimentos, riscos), rebalanceamento de carteira, monitor de notícias e dividendos
 - 🤖 **Cron job automático**: 9h BRT com entrega via WhatsApp + email
 
+## Modelo de Planilha
+
+Sua planilha deve seguir esta estrutura de colunas (a partir da linha 5):
+
+| A (Ticker) | B (Peso Alvo) | C (Preço Atual) | D (Qtd) | E (Peso) | F (Valor Alvo) | G (Alocado) | H (Diferença) |
+|------------|---------------|-----------------|---------|----------|----------------|-------------|---------------|
+| ABCD3      | 15%           |                 | 100     | 15       |                |             |               |
+| FIII11     | 20%           |                 | 50      | 20       |                |             |               |
+| MCHI       | 10%           |                 | 30      | 10       |                |             |               |
+
+```
+┌──────────────────┬──────────────┬──────────────┐
+│  🟢 Minha Carteira │  Outra Carteira │  AtivosPrecos  │
+└──────────────────┴──────────────┴──────────────┘
+```
+
+**Regras:**
+- **Linhas 1-3**: totais da carteira (Total BR, Total US, Total Geral)
+- **Linha 4**: cabeçalho da seção ("Ações BR", "FIIs", "Equity", etc.)
+- **Linhas 5+**: ativos com ticker na coluna A
+- **Coluna C**: use `=PROCV(A5;AtivosPrecos!A:C;2;FALSO)` para puxar o preço automaticamente
+- **Tickers BR**: ações (ex: ABCD3, XYZB4), FIIs (ex: FIII11, FOOO11)
+- **Tickers US**: prefixo `NASDAQ:` ou `NYSEARCA:` (ex: `NASDAQ:MCHI`, `NYSEARCA:SPHQ`)
+- **BTC**: `CURRENCY:BTCBRL` (BRL) ou `BTCUSD` (USD)
+- **Linhas de categoria**: "Ações BR", "RF", "Caixa", "FIIs", "Equity", "Proteções" — são ignoradas pelo scanner
+
+### Ticker mapping
+
+No `sheets.json`, mapeie como cada ticker da planilha é buscado:
+
+```json
+{
+  "ticker_map": {
+    "ABCD3": "ABCD3.SA",
+    "FIII11": "FIII11.SA",
+    "NASDAQ:MCHI": "MCHI",
+    "NYSEARCA:SPHQ": "SPHQ",
+    "CURRENCY:BTCBRL": "COINGECKO:BTC/BRL",
+    "BTCUSD": "COINGECKO:BTC/USD"
+  }
+}
+```
+
+### AtivosPrecos (aba gerada automaticamente)
+
+O `sync.py update` escreve nesta aba:
+
+| Ticker | Preço | Moeda |
+|--------|-------|-------|
+| ABCD3 | 43.49 | BRL |
+| FIII11 | 102.70 | BRL |
+| NASDAQ:MCHI | 54.14 | USD |
+| BTCUSD | 63714 | USD |
+
+Use `=PROCV(A5;AtivosPrecos!A:C;2;FALSO)` na sua aba de carteira para puxar o preço.
+
 ## Créditos
 
 As skills de análise são adaptadas de:
@@ -137,74 +193,6 @@ no_agent: true
 deliver: whatsapp          # resumo curto
 email: via gmail_send_attach.py no próprio script
 ```
-
----
-
-## Modelo de Planilha
-
-Sua planilha deve seguir esta estrutura de colunas (a partir da linha 5):
-
-| A (Ticker) | B (Peso Alvo) | C (Preço Atual) | D (Qtd) | E (Peso) | F (Valor Alvo) | G (Alocado) | H (Diferença) |
-|------------|---------------|-----------------|---------|----------|----------------|-------------|---------------|
-| ABCD3      | 15%           |                 | 100     | 15       |                |             |               |
-| FIII11     | 20%           |                 | 50      | 20       |                |             |               |
-| MCHI       | 10%           |                 | 30      | 10       |                |             |               |
-
-**Regras:**
-- **Linhas 1-3**: totais da carteira (Total BR, Total US, Total Geral)
-- **Linha 4**: cabeçalho da seção ("Ações BR", "FIIs", "Equity", etc.)
-- **Linhas 5+**: ativos com ticker na coluna A
-- **Coluna C**: use `=PROCV(A5;AtivosPrecos!A:C;2;FALSO)` para puxar o preço automaticamente
-- **Tickers BR**: ações (ex: ABCD3, XYZB4), FIIs (ex: FIII11, FOOO11)
-- **Tickers US**: prefixo `NASDAQ:` ou `NYSEARCA:` (ex: `NASDAQ:MCHI`, `NYSEARCA:SPHQ`)
-- **BTC**: `CURRENCY:BTCBRL` (BRL) ou `BTCUSD` (USD)
-- **Linhas de categoria**: "Ações BR", "RF", "Caixa", "FIIs", "Equity", "Proteções" — são ignoradas pelo scanner
-
-### Ticker mapping
-
-No `sheets.json`, mapeie como cada ticker da planilha é buscado:
-
-```json
-{
-  "ticker_map": {
-    "ABCD3": "ABCD3.SA",
-    "FIII11": "FIII11.SA",
-    "NASDAQ:MCHI": "MCHI",
-    "NYSEARCA:SPHQ": "SPHQ",
-    "CURRENCY:BTCBRL": "COINGECKO:BTC/BRL",
-    "BTCUSD": "COINGECKO:BTC/USD"
-  }
-}
-```
-
-### AtivosPrecos (aba gerada automaticamente)
-
-O `sync.py update` escreve nesta aba:
-
-| Ticker | Preço | Moeda |
-|--------|-------|-------|
-| ABCD3 | 43.49 | BRL |
-| FIII11 | 102.70 | BRL |
-| NASDAQ:MCHI | 54.14 | USD |
-| BTCUSD | 63714 | USD |
-
-Use `=PROCV(A5;AtivosPrecos!A:C;2;FALSO)` na sua aba de carteira para puxar o preço.
-
-Crie uma planilha no Google Sheets com 2 abas: `Minha Carteira` e `Outra Carteira` (ou os nomes que preferir).
-
-**Aba "Minha Carteira":**
-
-| A | B | C | D | E | F | G | H |
-|---|---|---|---|---|---|---|---|
-| | | | | Total Geral | | | |
-| | | | | Total BR | R$ 0,00 | | |
-| | | | | Total US | R$ 0,00 | | |
-| Ações BR | | | QTD | Peso | Alvo | Alocado | Diff |
-| ABCD3 | 50% | | 100 | 50 | R$ 0,00 | R$ 0,00 | |
-| FIIs | 30% | | | 30 | R$ 0,00 | R$ 0,00 | |
-| FIII11 | 100% | | 50 | 30 | R$ 0,00 | R$ 0,00 | |
-| Equity | 20% | | | 20 | R$ 0,00 | R$ 0,00 | |
-| NASDAQ:MCHI | 100% | | 30 | 20 | R$ 0,00 | R$ 0,00 | |
 
 ## Estrutura do Projeto
 
