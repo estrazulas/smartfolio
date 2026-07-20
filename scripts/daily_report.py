@@ -100,7 +100,13 @@ def fetch_price_history(symbol: str, source: str) -> dict:
 
         def closest_price(days_back: int):
             target = hist.index[-1] - pd.Timedelta(days=days_back)
-            idx = hist.index.get_indexer([target], method="nearest")[0]
+            # "pad" (ffill): se nao houver exata, pega a ultima data ANTERIOR.
+            # "nearest" causava bug nas segundas: domingo (sem dados) ficava
+            # mais proximo da propria segunda do que da sexta anterior → 0%.
+            idx = hist.index.get_indexer([target], method="pad")[0]
+            # idx = -1 quando target é anterior à primeira data do historico
+            if idx < 0:
+                idx = 0
             return hist["Close"].iloc[idx]
 
         import pandas as pd
